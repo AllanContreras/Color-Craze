@@ -8,7 +8,7 @@ cmds = [
   "export PATH=$JAVA_HOME/bin:$PATH",
   "java -version",
   "mvn -version",
-  "./mvnw -Djava.version=17 -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 -Dmaven.compiler.release=17 clean package -DskipTests"
+  "./mvnw -Djava.version=17 -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 -Dmaven.compiler.release=17 -Dmaven.compiler.compilerVersion=17 -DoutputFile=target/mvn-dependency-list.log -B -DskipTests clean dependency:list install"
 ]
 
 [phases.setup]
@@ -17,7 +17,7 @@ cmds = ["chmod +x ./mvnw"]
 
 [variables]
 JAVA_VERSION = "17"
-MAVEN_OPTS = "-Djava.version=17 -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 -Dmaven.compiler.release=17"
+MAVEN_OPTS = "-Djava.version=17 -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 -Dmaven.compiler.release=17 -Dmaven.compiler.compilerVersion=17 -Dfile.encoding=UTF-8"
 
 [start]
-cmd = "java -jar target/Color-craze-0.0.1-SNAPSHOT.jar"
+cmd = "java -Djava.version=17 -jar target/Color-craze-0.0.1-SNAPSHOT.jar"
