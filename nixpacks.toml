@@ -3,11 +3,21 @@ java = "17"
 
 [phases.build]
 dependsOn = ["setup"]
-cmds = ["./mvnw clean package -DskipTests"]
+cmds = [
+  "export JAVA_HOME=/nix/store/*openjdk17*/lib/openjdk", 
+  "export PATH=$JAVA_HOME/bin:$PATH",
+  "java -version",
+  "mvn -version",
+  "./mvnw -Djava.version=17 -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 -Dmaven.compiler.release=17 clean package -DskipTests"
+]
 
 [phases.setup]
 nixPkgs = ["maven", "openjdk17"]
 cmds = ["chmod +x ./mvnw"]
+
+[variables]
+JAVA_VERSION = "17"
+MAVEN_OPTS = "-Djava.version=17 -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 -Dmaven.compiler.release=17"
 
 [start]
 cmd = "java -jar target/Color-craze-0.0.1-SNAPSHOT.jar"
