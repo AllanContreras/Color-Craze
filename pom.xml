@@ -161,8 +161,14 @@
 						<maxmem>512m</maxmem>
 						<forceJavacCompilerUse>true</forceJavacCompilerUse>
 						<verbose>true</verbose>
+						<executable>javac</executable>
+						<failOnError>true</failOnError>
 						<compilerArgs>
 							<arg>--release</arg>
+							<arg>17</arg>
+							<arg>-source</arg>
+							<arg>17</arg>
+							<arg>-target</arg>
 							<arg>17</arg>
 						</compilerArgs>
 						<annotationProcessorPaths>
@@ -192,8 +198,14 @@
 					<maxmem>512m</maxmem>
 					<forceJavacCompilerUse>true</forceJavacCompilerUse>
 					<verbose>true</verbose>
+					<executable>javac</executable>
+					<failOnError>true</failOnError>
 					<compilerArgs>
 						<arg>--release</arg>
+						<arg>17</arg>
+						<arg>-source</arg>
+						<arg>17</arg>
+						<arg>-target</arg>
 						<arg>17</arg>
 					</compilerArgs>
 					<annotationProcessorPaths>
