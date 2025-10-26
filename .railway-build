@@ -1,0 +1,4 @@
+# This file forces Railway to rebuild and ignore old cache
+# Railway Build ID: 2025-10-26-cleanup
+# Configuration: Clean Java 17 build without .mvn configs
+RAILWAY_FORCE_REBUILD=true
