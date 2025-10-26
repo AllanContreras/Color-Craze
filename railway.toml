@@ -1,6 +1,9 @@
 [build]
 builder = "nixpacks"
 
+[build.nixpacksConfig]
+providers = ["java"]
+
 [deploy]
 startCommand = "java -jar target/Color-craze-0.0.1-SNAPSHOT.jar"
 healthcheckPath = "/actuator/health"

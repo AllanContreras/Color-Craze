@@ -23,7 +23,8 @@ public class GameSocketController {
     public void handlePlayerMove(@Payload PlayerMoveRoomMessage moveMessage) {
         String code = moveMessage.getCode();
         MoveResult result = gameService.handlePlayerMove(code, moveMessage.getPlayerId(), moveMessage.getDirection());
-
-        messagingTemplate.convertAndSend(String.format("/topic/board/%s", code), result);
+        if (result != null && result.success()) {
+            messagingTemplate.convertAndSend(String.format("/topic/board/%s", code), result);
+        }
     }
 }

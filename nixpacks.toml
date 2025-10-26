@@ -1,0 +1,13 @@
+[providers]
+java = "21"
+
+[phases.build]
+dependsOn = ["setup"]
+cmds = ["./mvnw clean package -DskipTests"]
+
+[phases.setup]
+nixPkgs = ["maven", "openjdk21"]
+cmds = ["chmod +x ./mvnw"]
+
+[start]
+cmd = "java -jar target/Color-craze-0.0.1-SNAPSHOT.jar"

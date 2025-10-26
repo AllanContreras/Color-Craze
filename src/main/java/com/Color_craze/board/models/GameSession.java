@@ -18,6 +18,7 @@ public class GameSession {
     private String code;
     private String status; // WAITING, PLAYING, FINISHED
     private Instant createdAt;
+    private Instant joinDeadline; // createdAt + 20s ventana de unión
     private Instant startedAt;
     private Instant finishedAt;
     private List<PlayerEntry> players = new ArrayList<>();
@@ -27,12 +28,21 @@ public class GameSession {
         public String playerId;
         public String nickname;
         public ColorStatus color;
+        public String avatar; // optional small character identifier
         public int score;
         public PlayerEntry() {}
         public PlayerEntry(String playerId, String nickname, ColorStatus color) {
             this.playerId = playerId;
             this.nickname = nickname;
             this.color = color;
+            this.avatar = null;
+            this.score = 0;
+        }
+        public PlayerEntry(String playerId, String nickname, ColorStatus color, String avatar) {
+            this.playerId = playerId;
+            this.nickname = nickname;
+            this.color = color;
+            this.avatar = avatar;
             this.score = 0;
         }
     }
@@ -60,6 +70,8 @@ public class GameSession {
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
     public Instant getStartedAt() { return startedAt; }
     public void setStartedAt(Instant startedAt) { this.startedAt = startedAt; }
+    public Instant getJoinDeadline() { return joinDeadline; }
+    public void setJoinDeadline(Instant joinDeadline) { this.joinDeadline = joinDeadline; }
     public Instant getFinishedAt() { return finishedAt; }
     public void setFinishedAt(Instant finishedAt) { this.finishedAt = finishedAt; }
     public List<PlayerEntry> getPlayers() { return players; }

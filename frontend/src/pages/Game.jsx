@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { createStompClient } from '../ws'
 import api from '../api'
 
@@ -19,16 +19,76 @@ export default function Game(){
   const { code } = useParams()
   const [grid, setGrid] = useState(makeEmptyGrid)
   const [players, setPlayers] = useState([])
+  const [playerCells, setPlayerCells] = useState({}) // key: "r,c" -> { playerId, color }
   const [messages, setMessages] = useState([])
   const [client, setClient] = useState(null)
   const [timeLeft, setTimeLeft] = useState(null)
+  const [endStandings, setEndStandings] = useState(null)
+  const [fullMode, setFullMode] = useState(false)
+  const [joinLeft, setJoinLeft] = useState(null)
   const timerRef = useRef(null)
+  const joinTimerRef = useRef(null)
+  const playerColorMapRef = useRef(new Map()) // playerId -> color
+  const playerAvatarMapRef = useRef(new Map()) // playerId -> avatar string
+  const [canMove, setCanMove] = useState(false)
+  const openedFullRef = useRef(false)
+  const [ultraMode, setUltraMode] = useState(false)
+  const navigate = useNavigate()
+  // Arena (2D) mode state
+  const [arenaMode, setArenaMode] = useState(false)
+  const [arenaConfig, setArenaConfig] = useState(null) // { width, height, platforms:[{x,y,width,height,cells}] }
+  const [arenaFrame, setArenaFrame] = useState(null)   // { players:[{playerId,x,y,onGround}], paint: { idx: [colors] } }
+  const canvasRef = useRef(null)
+  const inputRef = useRef({left:false,right:false,jump:false})
+  const [arenaTheme, setArenaTheme] = useState(null) // 'metal' | 'cyber' | 'moon' (null => assign randomly on start)
+  // Cyberpunk visuals state
+  const platformPatternRef = useRef(null) // CanvasPattern cache for platform texture
+  const lastPaintRef = useRef({})         // Per-platform snapshot of previous paint colors
+  const particlesRef = useRef([])         // Lightweight paint splash particles
+  const lastThemeRef = useRef(null)
+  const themeAssignedKeyRef = useRef(null) // code:startTimestamp guard for randomization
+  const moonStarsRef = useRef(null)        // cached starfield for moon theme
+
+  const pickRandomTheme = () => {
+    const themes = ['metal','cyber','moon']
+    return themes[Math.floor(Math.random()*themes.length)]
+  }
+
+  // Spawn a few particles when a cell gets painted to give it a cyber splash
+  const spawnPaintParticles = (x, y, width, height, color) => {
+    const out = particlesRef.current
+    const n = (arenaTheme === 'cyber') ? 6 : 3
+    for (let i=0;i<n;i++){
+      const angle = Math.random()*Math.PI - Math.PI/2
+      const speed = 30 + Math.random()*90
+      out.push({
+        x: x + width*0.5,
+        y: y + height*0.5,
+        vx: Math.cos(angle)*speed,
+        vy: Math.sin(angle)*speed - 30,
+        life: 320, // ms
+        born: Date.now(),
+        color
+      })
+    }
+    // Keep the list bounded
+    if (out.length > 300) out.splice(0, out.length-300)
+  }
 
   useEffect(()=>{
     let c = createStompClient((stomp) => {
       stomp.subscribe(`/topic/board/${code}/state`, m => handleState(JSON.parse(m.body)))
       stomp.subscribe(`/topic/board/${code}`, m => handleMove(JSON.parse(m.body)))
       stomp.subscribe(`/topic/board/${code}/end`, m => handleEnd(JSON.parse(m.body)))
+      stomp.subscribe(`/topic/board/${code}/arena`, m => {
+        try{
+          const fr = JSON.parse(m.body)
+          setArenaFrame(fr)
+          if (fr && fr.scores){
+            setPlayers(prev => prev.map(p => ({...p, score: (fr.scores[p.playerId] ?? p.score ?? 0)})))
+          }
+        } catch {}
+      })
     })
     setClient(c)
     return ()=> c.deactivate()
@@ -38,25 +98,585 @@ export default function Game(){
   useEffect(()=>{
     return ()=>{
       if (timerRef.current) clearInterval(timerRef.current)
+      if (joinTimerRef.current) clearInterval(joinTimerRef.current)
     }
   },[])
+
+  // Keyboard controls: Arrow keys to move
+  useEffect(()=>{
+    const onKey = (e) => {
+      let dir = null
+      switch(e.key){
+        case 'ArrowUp': dir = 'UP'; break
+        case 'ArrowDown': dir = 'DOWN'; break
+        case 'ArrowLeft': dir = 'LEFT'; break
+        case 'ArrowRight': dir = 'RIGHT'; break
+        default: break
+      }
+      if (dir){
+        // Solo interceptar y mover cuando ya se puede mover
+        // Evitar enviar movimientos del grid cuando estamos en modo arena
+        if (canMove && !arenaMode){
+          e.preventDefault()
+          sendMove(dir)
+        }
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return ()=> window.removeEventListener('keydown', onKey)
+  }, [client, canMove, arenaMode])
+
+  // Cargar estado inicial (jugadores y countdown de unión) al entrar
+  useEffect(()=>{
+    const load = async () => {
+      try{
+        const res = await api.get(`/api/games/${code}`)
+        if (res.data.players) setPlayers(res.data.players)
+        if (res.data.joinDeadlineMs) startJoinTimer(res.data.joinDeadlineMs)
+        const params = new URLSearchParams(window.location.search)
+        const alreadyFull = params.get('full') === '1'
+        if (alreadyFull) setUltraMode(true)
+        if (res.data.status === 'PLAYING'){
+          // activar modo grande en la misma ventana
+          setFullMode(true)
+          // permitir movimiento inmediato si ya está en juego
+          setCanMove(true)
+          // Fallback: si ya estamos en PLAYING y el cliente no alcanzó el WS inicial,
+          // arranca el contador desde startedAtMs + durationMs del GET
+          const startMs = res.data.startedAtMs
+          const durMs = res.data.durationMs || 40000
+          if (startMs){
+            const endAt = startMs + durMs
+            const now = Date.now()
+            startTimer(Math.max(0, Math.floor((endAt - now)/1000)))
+            // randomizar tema si aún no se eligió
+            const key = `${code}:${startMs}`
+            if (themeAssignedKeyRef.current !== key){
+              setArenaTheme(prev => prev ?? pickRandomTheme())
+              themeAssignedKeyRef.current = key
+            }
+          }
+          // Fallback de posiciones iniciales
+          if (Array.isArray(res.data.playerPositions)){
+            const cells = {}
+            for (const pos of res.data.playerPositions){
+              const key = `${pos.row},${pos.col}`
+              cells[key] = { playerId: pos.playerId, color: colorToHex(pos.color) }
+            }
+            setPlayerCells(cells)
+          }
+          // Arena config via GET (mid-game refresh)
+          if (res.data.arena){ setArenaMode(true); setArenaConfig(res.data.arena) }
+        }
+      }catch{}
+    }
+    load()
+  },[code])
 
   const handleState = (body) => {
     setMessages(msgs => [...msgs, {t:'state', body}])
     // body may contain platforms and players and startTimestamp
     if (body.platforms) applyPlatforms(body.platforms)
-    if (body.players) setPlayers(body.players)
+  if (body.players) setPlayers(body.players)
+    if (body.players){
+      const m = new Map()
+      for (const p of body.players){
+        if (p.playerId) m.set(p.playerId, p.color)
+      }
+      playerColorMapRef.current = m
+      const am = new Map()
+      for (const p of body.players){
+        if (p.playerId) am.set(p.playerId, p.avatar || null)
+      }
+      playerAvatarMapRef.current = am
+    }
+    if (body.playerPositions){
+      // set player positions overlay
+      const cells = {}
+      for (const pos of body.playerPositions){
+        const key = `${pos.row},${pos.col}`
+        cells[key] = { playerId: pos.playerId, color: colorToHex(pos.color) }
+      }
+      setPlayerCells(cells)
+    }
+    if (body.status === 'PLAYING'){
+      // activar modo grande en la misma ventana (no abrir nueva ventana)
+      setFullMode(true)
+      setCanMove(true)
+      // Forzar arena mode en PLAYING; si no viene config aún, usa un fallback
+      setArenaMode(true)
+      if (body.arena){
+        setArenaConfig(body.arena)
+      } else if (!arenaConfig){
+        setArenaConfig({ width: 980, height: 540, platforms: [] })
+      }
+      // Randomizar tema al inicio de la partida (una vez por startTimestamp)
+      if (body.startTimestamp){
+        const key = `${code}:${body.startTimestamp}`
+        if (themeAssignedKeyRef.current !== key){
+          setArenaTheme(prev => prev ?? pickRandomTheme())
+          themeAssignedKeyRef.current = key
+        }
+      }
+    } else if (body.status === 'WAITING') {
+      setCanMove(false)
+      setArenaMode(false)
+      setArenaConfig(null)
+      // limpiar patrón para recalcular en el siguiente tema/partida
+      platformPatternRef.current = null
+      lastThemeRef.current = null
+      lastPaintRef.current = {}
+    }
+    // fallback: si llega un timestamp de inicio, habilitar movimiento
     if (body.startTimestamp){
+      setCanMove(true)
+    }
+    if (body.joinDeadlineMs && (!body.status || body.status === 'WAITING')){
+      startJoinTimer(body.joinDeadlineMs)
+    }
+    if (body.startTimestamp){
+      // al iniciar la partida, dejar de mostrar joinLeft
+      if (joinTimerRef.current) clearInterval(joinTimerRef.current)
+      setJoinLeft(null)
       const now = Date.now()
-      const endAt = body.startTimestamp + (body.duration || 45000)
+      const durationMs = body.duration || body.gameDurationMs || 40000
+      const endAt = body.startTimestamp + durationMs
       startTimer(Math.max(0, Math.floor((endAt - now)/1000)))
     }
   }
 
+  // Arena inputs (left/right/jump) handlers
+  useEffect(()=>{
+    const sendInput = () => {
+      if (!client || !client.connected || !arenaMode) return
+      const playerId = localStorage.getItem('cc_userId')
+      const { left, right, jump } = inputRef.current
+      client.publish({ destination:'/app/arena/input', body: JSON.stringify({ code, playerId, left, right, jump }) })
+    }
+    const down = (e) => {
+      if (!arenaMode) return
+      switch(e.key){
+        case 'ArrowLeft': case 'a': case 'A': e.preventDefault(); inputRef.current.left = true; sendInput(); break
+        case 'ArrowRight': case 'd': case 'D': e.preventDefault(); inputRef.current.right = true; sendInput(); break
+        case 'ArrowUp': case 'w': case 'W': case ' ': e.preventDefault(); inputRef.current.jump = true; sendInput(); break
+        case 'ArrowDown': e.preventDefault(); /* no-op in arena, just prevent page scroll */ break
+        default: break
+      }
+    }
+    const up = (e) => {
+      if (!arenaMode) return
+      switch(e.key){
+        case 'ArrowLeft': case 'a': case 'A': e.preventDefault(); inputRef.current.left = false; sendInput(); break
+        case 'ArrowRight': case 'd': case 'D': e.preventDefault(); inputRef.current.right = false; sendInput(); break
+        case 'ArrowUp': case 'w': case 'W': case ' ': e.preventDefault(); inputRef.current.jump = false; /* optional send */ break
+        case 'ArrowDown': e.preventDefault(); /* prevent page scroll */ break
+        default: break
+      }
+    }
+    window.addEventListener('keydown', down)
+    window.addEventListener('keyup', up)
+    return ()=>{
+      window.removeEventListener('keydown', down)
+      window.removeEventListener('keyup', up)
+    }
+  },[client, arenaMode, code])
+
+  // Draw arena on canvas when we have frames
+  useEffect(()=>{
+    if (!arenaMode || !arenaConfig || !arenaFrame) return
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    const { width, height, platforms } = arenaConfig
+    canvas.width = width
+    canvas.height = height
+    const now = Date.now()
+    if (arenaTheme === 'cyber'){
+      // Background: deep cyber gradient with a slight time shift
+      const t = (now % 20000) / 20000
+      const grad = ctx.createLinearGradient(0, 0, 0, height)
+      grad.addColorStop(Math.max(0, 0.00 + t*0.05), '#0b1020')
+      grad.addColorStop(Math.max(0, 0.35 + t*0.05), '#121a35')
+      grad.addColorStop(Math.min(1, 0.70 + t*0.05), '#1a2454')
+      ctx.fillStyle = grad
+      ctx.fillRect(0,0,width,height)
+      // Subtle parallax scanlines
+      ctx.save()
+      ctx.globalAlpha = 0.12
+      ctx.fillStyle = '#00f6ff'
+      for (let i=0;i<3;i++){
+        const yy = (now*0.02 + i*60) % (height+120) - 120
+        ctx.fillRect(((i+1)*37)%width - 120, yy, width*0.6, 6)
+      }
+      ctx.restore()
+    } else if (arenaTheme === 'metal') {
+      // Metal: dark steel with brushed lines and vignette
+      const grad = ctx.createLinearGradient(0, 0, 0, height)
+      grad.addColorStop(0, '#1a1d22')
+      grad.addColorStop(1, '#2b2f36')
+      ctx.fillStyle = grad
+      ctx.fillRect(0,0,width,height)
+      // brushed effect (horizontal thin strokes)
+      ctx.save()
+      ctx.globalAlpha = 0.06
+      ctx.strokeStyle = '#ffffff'
+      for (let y=0; y<height; y+=2){
+        ctx.beginPath(); ctx.moveTo(0,y+0.5); ctx.lineTo(width,y+0.5); ctx.stroke()
+      }
+      ctx.restore()
+      // vignette
+      ctx.save()
+      const v = ctx.createLinearGradient(0,0,0,height)
+      v.addColorStop(0,'rgba(0,0,0,0.35)')
+      v.addColorStop(0.08,'rgba(0,0,0,0.0)')
+      v.addColorStop(0.92,'rgba(0,0,0,0.0)')
+      v.addColorStop(1,'rgba(0,0,0,0.35)')
+      ctx.fillStyle = v
+      ctx.fillRect(0,0,width,height)
+      ctx.restore()
+    } else {
+      // Moon: space sky with stars and Earth; lunar ground band and side "walls"
+      // Space background
+      const grad = ctx.createLinearGradient(0, 0, 0, height)
+      // Slightly brighter deep space for moon ambience
+      grad.addColorStop(0, '#0e1118')
+      grad.addColorStop(1, '#181c24')
+      ctx.fillStyle = grad
+      ctx.fillRect(0,0,width,height)
+      // Stars (cached)
+      if (!moonStarsRef.current || lastThemeRef.current !== 'moon'){
+        const stars = []
+        const count = Math.min(160, Math.floor((width*height)/6000))
+        for (let i=0;i<count;i++){
+          stars.push({ x: Math.random()*width, y: Math.random()*height*0.7, r: Math.random()*1.4+0.2, phase: Math.random()*Math.PI*2 })
+        }
+        moonStarsRef.current = stars
+      }
+      ctx.save()
+      ctx.fillStyle = '#ffffff'
+      for (const s of (moonStarsRef.current || [])){
+        const tw = 0.7 + 0.3*Math.sin(now*0.003 + s.phase)
+        ctx.globalAlpha = 0.5*tw
+        ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fill()
+      }
+      ctx.restore()
+      // Earth disc (top-right)
+      const ex = width - Math.min(180, width*0.18)
+      const ey = Math.max(80, height*0.18)
+      const er = Math.min(90, width*0.09)
+      const egrad = ctx.createRadialGradient(ex, ey, er*0.1, ex, ey, er)
+      egrad.addColorStop(0, '#7fd3ff')
+      egrad.addColorStop(0.5, '#2aa6ff')
+      egrad.addColorStop(1, 'rgba(0,0,0,0)')
+      ctx.save()
+      ctx.globalAlpha = 0.8
+      ctx.fillStyle = egrad
+      ctx.beginPath(); ctx.arc(ex, ey, er, 0, Math.PI*2); ctx.fill()
+      ctx.restore()
+  // Lunar ground band with wavy (ondulada) horizon
+      const groundH = Math.max(80, height*0.22)
+      const y0 = height - groundH
+      const A = Math.min(22, height*0.04)
+      const waves = 2.5
+  // Fill with a slightly less bright lunar regolith gradient
+  const gbg = ctx.createLinearGradient(0, y0, 0, height)
+  gbg.addColorStop(0,'#c8c7c5')
+  gbg.addColorStop(1,'#b6b5b2')
+      ctx.save()
+      ctx.fillStyle = gbg
+      ctx.beginPath()
+      ctx.moveTo(0, y0 + A*Math.sin(0))
+      for (let x=0; x<=width; x+=16){
+        const yy = y0 + A*Math.sin((x/width)*Math.PI*2*waves)
+        ctx.lineTo(x, yy)
+      }
+      ctx.lineTo(width, height)
+      ctx.lineTo(0, height)
+      ctx.closePath()
+      ctx.fill()
+      ctx.restore()
+      // Soft horizon haze to lift brightness near the crest
+      ctx.save()
+      const hz = ctx.createLinearGradient(0, y0-24, 0, y0+24)
+      hz.addColorStop(0,'rgba(220,230,255,0.06)')
+      hz.addColorStop(0.5,'rgba(220,230,255,0.10)')
+      hz.addColorStop(1,'rgba(220,230,255,0.00)')
+      ctx.fillStyle = hz
+      ctx.fillRect(0, Math.max(0,y0-24), width, 48)
+      ctx.restore()
+  // Side walls (darker/black as requested)
+      const wallW = Math.max(10, Math.floor(width*0.02))
+  ctx.fillStyle = '#000000'
+      ctx.fillRect(0, 0, wallW, height)
+      ctx.fillRect(width-wallW, 0, wallW, height)
+    }
+
+    // Ensure platform texture pattern exists for current theme
+    if (!platformPatternRef.current || lastThemeRef.current !== arenaTheme){
+      const off = document.createElement('canvas')
+      const S = 16
+      off.width = S; off.height = S
+      const octx = off.getContext('2d')
+      if (arenaTheme === 'cyber'){
+        octx.fillStyle = '#2a2f44'
+        octx.fillRect(0,0,S,S)
+        octx.strokeStyle = 'rgba(255,255,255,0.06)'
+        octx.lineWidth = 1
+        octx.beginPath(); octx.moveTo(-2, S-2); octx.lineTo(S-2, -2); octx.stroke()
+      } else if (arenaTheme === 'metal') {
+        // metal crosshatch + rivets
+        octx.fillStyle = '#3a3f48'
+        octx.fillRect(0,0,S,S)
+        octx.strokeStyle = 'rgba(255,255,255,0.05)'
+        octx.lineWidth = 1
+        octx.beginPath(); octx.moveTo(0,S); octx.lineTo(S,0); octx.stroke()
+        octx.beginPath(); octx.moveTo(0,0); octx.lineTo(S,S); octx.stroke()
+        // rivets
+        octx.fillStyle = 'rgba(0,0,0,0.35)'
+        octx.beginPath(); octx.arc(S*0.25,S*0.25,1.2,0,Math.PI*2); octx.fill()
+        octx.beginPath(); octx.arc(S*0.75,S*0.75,1.2,0,Math.PI*2); octx.fill()
+      } else {
+        // moon: regolith texture (speckles + small craters)
+        octx.fillStyle = '#3b3a38'
+        octx.fillRect(0,0,S,S)
+        // speckles
+        octx.fillStyle = 'rgba(255,255,255,0.05)'
+        for (let i=0;i<8;i++){
+          octx.fillRect(Math.random()*S, Math.random()*S, 1, 1)
+        }
+        // tiny craters
+        octx.fillStyle = 'rgba(0,0,0,0.18)'
+        octx.beginPath(); octx.arc(S*0.35,S*0.35,1.2,0,Math.PI*2); octx.fill()
+        octx.beginPath(); octx.arc(S*0.7,S*0.6,1.0,0,Math.PI*2); octx.fill()
+      }
+      platformPatternRef.current = ctx.createPattern(off, 'repeat')
+      lastThemeRef.current = arenaTheme
+    }
+
+    // draw platforms with paint and theme edges
+    for (let i=0;i<platforms.length;i++){
+      const pl = platforms[i]
+      if (arenaTheme === 'cyber'){
+        // shadow + base
+        ctx.save()
+        ctx.shadowColor = 'rgba(0,246,255,0.25)'
+        ctx.shadowBlur = 12
+        ctx.fillStyle = '#21263a'
+        ctx.fillRect(pl.x, pl.y, pl.width, pl.height)
+        ctx.restore()
+        // texture overlay
+        ctx.save()
+        ctx.globalAlpha = 0.25
+        ctx.fillStyle = platformPatternRef.current
+        ctx.fillRect(pl.x, pl.y, pl.width, pl.height)
+        ctx.restore()
+        // neon edge
+        ctx.save()
+        ctx.shadowColor = '#00f6ff'
+        ctx.shadowBlur = 10
+        ctx.strokeStyle = 'rgba(0,246,255,0.9)'
+        ctx.lineWidth = 2
+        ctx.strokeRect(pl.x+1, pl.y+1, pl.width-2, pl.height-2)
+        ctx.restore()
+      } else if (arenaTheme === 'metal') {
+        // metal: soft shadow + steel base
+        ctx.save()
+        ctx.shadowColor = 'rgba(0,0,0,0.35)'
+        ctx.shadowBlur = 8
+        ctx.fillStyle = '#2f3540'
+        ctx.fillRect(pl.x, pl.y, pl.width, pl.height)
+        ctx.restore()
+        // texture overlay
+        ctx.save()
+        ctx.globalAlpha = 0.35
+        ctx.fillStyle = platformPatternRef.current
+        ctx.fillRect(pl.x, pl.y, pl.width, pl.height)
+        ctx.restore()
+        // bevel edges
+        ctx.save()
+        ctx.strokeStyle = '#111'
+        ctx.lineWidth = 2
+        ctx.strokeRect(pl.x, pl.y, pl.width, pl.height)
+        ctx.strokeStyle = 'rgba(255,255,255,0.25)'
+        ctx.lineWidth = 1
+        ctx.strokeRect(pl.x+1.5, pl.y+1.5, pl.width-3, pl.height-3)
+        // top highlight
+        ctx.strokeStyle = 'rgba(255,255,255,0.15)'
+        ctx.beginPath(); ctx.moveTo(pl.x+2, pl.y+1.5); ctx.lineTo(pl.x+pl.width-2, pl.y+1.5); ctx.stroke()
+        ctx.restore()
+      } else {
+        // moon: lunar regolith platforms with craters and soft edge
+        ctx.save()
+  ctx.fillStyle = '#c9c8c6'
+        ctx.fillRect(pl.x, pl.y, pl.width, pl.height)
+        // texture overlay (pattern)
+  ctx.globalAlpha = 0.18
+        ctx.fillStyle = platformPatternRef.current
+        ctx.fillRect(pl.x, pl.y, pl.width, pl.height)
+        ctx.globalAlpha = 1
+        // crater speckles
+        ctx.fillStyle = 'rgba(0,0,0,0.15)'
+        for (let c=0;c<3;c++){
+          const rx = pl.x + 4 + Math.random()*(pl.width-8)
+          const ry = pl.y + 3 + Math.random()*(pl.height-6)
+          const rr = 1 + Math.random()*2.5
+          ctx.beginPath(); ctx.arc(rx, ry, rr, 0, Math.PI*2); ctx.fill()
+        }
+        ctx.restore()
+        // soft edge outline for readability (slightly darker on bright surface)
+        ctx.save()
+        ctx.strokeStyle = 'rgba(0,0,0,0.15)'
+        ctx.lineWidth = 2
+        ctx.strokeRect(pl.x+0.5, pl.y+0.5, pl.width-1, pl.height-1)
+        ctx.restore()
+      }
+      // paint cells
+      const paintArr = arenaFrame.paint ? arenaFrame.paint[i] : null
+      if (paintArr){
+        const cellW = pl.width / pl.cells
+        const prev = lastPaintRef.current[i] || []
+        for (let cIdx=0;cIdx<paintArr.length;cIdx++){
+          const col = paintArr[cIdx]
+          if (!col) continue
+          const hex = colorToHex(col)
+          const cx = pl.x + cIdx*cellW
+          const cy = pl.y
+          // base fill
+          ctx.fillStyle = hex
+          ctx.fillRect(cx, cy, cellW, pl.height)
+          // style-specific enhancement
+          if (arenaTheme === 'cyber'){
+            // glow pass
+            ctx.save()
+            ctx.globalCompositeOperation = 'lighter'
+            ctx.shadowColor = hex
+            ctx.shadowBlur = 8
+            ctx.globalAlpha = 0.30
+            ctx.fillStyle = hex
+            ctx.fillRect(cx, cy, cellW, pl.height)
+            ctx.restore()
+          } else if (arenaTheme === 'metal') {
+            // subtle sheen
+            const g = ctx.createLinearGradient(cx, cy, cx+cellW, cy+pl.height)
+            g.addColorStop(0,'rgba(255,255,255,0.05)')
+            g.addColorStop(1,'rgba(0,0,0,0.10)')
+            ctx.save(); ctx.globalAlpha = 0.5; ctx.fillStyle = g; ctx.fillRect(cx, cy, cellW, pl.height); ctx.restore()
+          } else {
+            // moon: paint dust overlay and subtle dark outline for contrast on bright surface
+            ctx.save()
+            ctx.globalAlpha = 0.24
+            ctx.fillStyle = hex
+            ctx.fillRect(cx, cy, cellW, pl.height)
+            ctx.restore()
+            // contrast outline
+            ctx.save()
+            ctx.strokeStyle = 'rgba(0,0,0,0.06)'
+            ctx.lineWidth = 1
+            ctx.strokeRect(cx+0.5, cy+0.5, Math.max(0, cellW-1), Math.max(0, pl.height-1))
+            ctx.restore()
+          }
+          // splash on new paint
+          if (prev[cIdx] !== col){
+            spawnPaintParticles(cx, cy, cellW, pl.height, hex)
+          }
+        }
+        // snapshot for next frame
+        lastPaintRef.current[i] = paintArr.slice()
+      }
+    }
+    // draw players
+    const pp = arenaFrame.players || []
+    for (const p of pp){
+      const color = colorToHex(players.find(x=>x.playerId===p.playerId)?.color || 'PINK')
+      if (arenaTheme === 'cyber'){
+        // glow body
+        ctx.save()
+        ctx.shadowColor = color
+        ctx.shadowBlur = 15
+        ctx.fillStyle = color
+        ctx.fillRect(p.x, p.y, 24, 32)
+        ctx.restore()
+        // simple visor line accent
+        ctx.strokeStyle = 'rgba(255,255,255,0.7)'
+        ctx.lineWidth = 2
+        ctx.beginPath()
+        ctx.moveTo(p.x+4, p.y+12)
+        ctx.lineTo(p.x+20, p.y+12)
+        ctx.stroke()
+      } else if (arenaTheme === 'metal') {
+        // metal: solid body with small highlight
+        ctx.save()
+        ctx.fillStyle = color
+        ctx.fillRect(p.x, p.y, 24, 32)
+        const hg = ctx.createLinearGradient(p.x, p.y, p.x+24, p.y+32)
+        hg.addColorStop(0,'rgba(255,255,255,0.15)')
+        hg.addColorStop(1,'rgba(0,0,0,0.10)')
+        ctx.fillStyle = hg
+        ctx.fillRect(p.x, p.y, 24, 32)
+        ctx.restore()
+      } else {
+        // moon: subtle blue rim-light (Earth light)
+        ctx.save()
+        ctx.fillStyle = color
+        ctx.fillRect(p.x, p.y, 24, 32)
+        ctx.strokeStyle = 'rgba(80,200,255,0.65)'
+        ctx.lineWidth = 2
+        ctx.strokeRect(p.x+0.5, p.y+0.5, 23, 31)
+        ctx.restore()
+      }
+    }
+    // particles
+    const arr = particlesRef.current
+    for (let k=arr.length-1;k>=0;k--){
+      const pt = arr[k]
+      const age = now - pt.born
+      if (age > pt.life){ arr.splice(k,1); continue }
+      const tnorm = age / pt.life
+      const alpha = 1 - tnorm
+      // integrate simple motion
+      const px = pt.x + pt.vx * (age/1000)
+      const py = pt.y + pt.vy * (age/1000) + 0.5*200*(age/1000)*(age/1000)
+      ctx.save()
+  const particleAlpha = (arenaTheme==='cyber'?0.8 : arenaTheme==='metal' ? 0.5 : 0.6)
+      ctx.globalAlpha = Math.max(0, alpha * particleAlpha)
+      ctx.fillStyle = pt.color
+      ctx.beginPath()
+      ctx.arc(px, py, 2.0, 0, Math.PI*2)
+      ctx.fill()
+      ctx.restore()
+    }
+  },[arenaMode, arenaConfig, arenaFrame, players, arenaTheme])
+
   const handleMove = (body) => {
     setMessages(msgs => [...msgs, {t:'move', body}])
+    if (body && body.success === false) return
     if (body.platforms) applyPlatforms(body.platforms)
     if (body.players) setPlayers(body.players)
+    if (body.affectedPlayers && Array.isArray(body.affectedPlayers)){
+      setPlayers(prev => {
+        const copy = prev.map(p => ({...p}))
+        for (const up of body.affectedPlayers){
+          const id = (up.playerId && (typeof up.playerId === 'string' ? up.playerId : up.playerId.toString()))
+          const idx = copy.findIndex(pp => pp.playerId === id)
+          if (idx >= 0) copy[idx].score = up.newScore
+        }
+        return copy
+      })
+    }
+    // update single player position if provided
+    if (body.playerId && (typeof body.newRow === 'number') && (typeof body.newCol === 'number')){
+      setPlayerCells(prev => {
+        const next = {...prev}
+        // remove any previous cell for this playerId
+        for (const k of Object.keys(next)){
+          if (next[k].playerId === body.playerId) delete next[k]
+        }
+        const key = `${body.newRow},${body.newCol}`
+        const color = colorToHex(playerColorMapRef.current.get(body.playerId))
+        next[key] = { playerId: body.playerId, color }
+        return next
+      })
+    }
   }
 
   const handleEnd = (body) => {
@@ -65,6 +685,7 @@ export default function Game(){
     setTimeLeft(0)
     if (body.platforms) applyPlatforms(body.platforms)
     if (body.players) setPlayers(body.players)
+    if (body.standings) setEndStandings(body.standings)
   }
 
   const applyPlatforms = (platforms) => {
@@ -72,7 +693,7 @@ export default function Game(){
       const copy = g.map(r => r.slice())
       for (const p of platforms){
         if (p.row >=0 && p.row < ROWS && p.col >=0 && p.col < COLS){
-          copy[p.row][p.col] = p.color || '#cccccc'
+          copy[p.row][p.col] = colorToHex(p.color) || '#cccccc'
         }
       }
       return copy
@@ -91,49 +712,143 @@ export default function Game(){
     },1000)
   }
 
+  const startJoinTimer = (deadlineMs) => {
+    if (joinTimerRef.current) clearInterval(joinTimerRef.current)
+    const update = () => {
+      const remain = Math.max(0, Math.ceil((deadlineMs - Date.now())/1000))
+      setJoinLeft(remain)
+      if (remain <= 0 && joinTimerRef.current){
+        clearInterval(joinTimerRef.current)
+      }
+    }
+    update()
+    joinTimerRef.current = setInterval(update, 1000)
+  }
+
   const sendMove = (direction) => {
     const playerId = localStorage.getItem('cc_userId')
     if (!client || !client.connected) return
+    if (!canMove) return
     client.publish({destination:'/app/move', body: JSON.stringify({ code, playerId, direction })})
   }
 
   return (
-    <div>
+    <>
+    <div className="game-page">
       <h3>Game {code}</h3>
-      <div style={{display:'flex', gap:16}}>
-        <div>
+      <div className="game-layout">
+        <main className="board-wrap">
+          {arenaMode ? (
+            <canvas ref={canvasRef} style={{background:'#111827', border:'1px solid #333'}} />
+          ) : (
+            <div className={`grid ${fullMode ? 'large' : ''} ${ultraMode ? 'ultra' : ''}`}>
+              {grid.map((row, rIdx) => row.map((cell, cIdx) => {
+                const key = `${rIdx},${cIdx}`
+                const pc = playerCells[key]
+                const avatar = pc ? (playerAvatarMapRef.current.get(pc.playerId) || null) : null
+                return (
+                  <div
+                    key={`${rIdx}-${cIdx}`}
+                    className="box"
+                    style={{
+                      position: 'relative',
+                      background: (pc?.color) || cell || '#ffffff',
+                      border: (pc) ? '2px solid #000' : (cell ? '1px solid #666' : '1px solid #ddd')
+                    }}
+                  >
+                    {pc && avatar && (
+                      <span className="avatar-mark">{avatarToEmoji(avatar)}</span>
+                    )}
+                  </div>
+                )
+              }))}
+            </div>
+          )}
+        </main>
+
+        <aside className="sidebar">
           <div style={{marginBottom:8}}>
-            <button onClick={()=>sendMove('UP')}>UP</button>
-            <button onClick={()=>sendMove('LEFT')}>LEFT</button>
-            <button onClick={()=>sendMove('RIGHT')}>RIGHT</button>
-            <button onClick={()=>sendMove('DOWN')}>DOWN</button>
+            <label style={{marginRight:6}}>Estilo:</label>
+            <select value={arenaTheme ?? ''} onChange={(e)=>setArenaTheme(e.target.value)}>
+              <option value={arenaTheme ?? ''} disabled>{arenaTheme ? '(actual)' : '(aleatorio)'}</option>
+              <option value="metal">Metal</option>
+              <option value="cyber">Cyberpunk</option>
+              <option value="moon">Luna</option>
+            </select>
           </div>
-          <div>Time left: {timeLeft===null?'-':timeLeft}s</div>
+          {!canMove && (
+            <div style={{marginBottom:8, color:'#ddd'}}>Esperando a que comience el juego...</div>
+          )}
+            {joinLeft !== null && timeLeft===null && (
+              <div>La partida comienza en: {joinLeft}s</div>
+            )}
+            <div>Tiempo de partida: {timeLeft===null?'-':timeLeft}s</div>
           <div style={{marginTop:12}}>
             <h4>Players</h4>
             <ul>
-              {players.map(p => <li key={p.id}>{p.nickname || p.id} - {p.score ?? 0}</li>)}
+                {players.map(p => (
+                  <li key={p.playerId || p.id}>
+                    <span style={{display:'inline-block', width:12, height:12, background: colorToHex(p.color), border:'1px solid #666', marginRight:6}} />
+                    {p.nickname || p.playerId || p.id} {p.avatar ? <span style={{marginLeft:4}}>{avatarToEmoji(p.avatar)}</span> : null} - {p.color} - {p.score ?? 0}
+                  </li>
+                ))}
             </ul>
           </div>
-        </div>
-
-        <div>
-          <div className="grid">
-            {grid.map((row, rIdx) => row.map((cell, cIdx) => (
-              <div
-                key={`${rIdx}-${cIdx}`}
-                className="box"
-                style={{background: cell || '#ffffff', border: cell ? '1px solid #666' : '1px solid #ddd'}}
-              />
-            )))}
-          </div>
-        </div>
+        </aside>
       </div>
 
       <div style={{marginTop:12}}>
         <h4>Eventos</h4>
         <pre style={{background:'#eee', padding:8, maxHeight:200, overflow:'auto'}}>{JSON.stringify(messages.slice(-20),null,2)}</pre>
       </div>
-    </div>
+  </div>
+    {endStandings && (
+      <div style={{position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', display:'flex', alignItems:'center', justifyContent:'center'}}>
+        <div style={{background:'#111827', padding:20, borderRadius:12, width:420}}>
+          <h3>Resultados</h3>
+          {endStandings.length>0 && (
+            <div style={{marginBottom:12}}>
+              Ganador: <strong>{endStandings[0].nickname || endStandings[0].playerId}</strong> {endStandings[0].avatar ? <span style={{marginLeft:6}}>{avatarToEmoji(endStandings[0].avatar)}</span> : null} con <strong>{endStandings[0].score}</strong> puntos
+            </div>
+          )}
+          <div style={{maxHeight:180, overflow:'auto', marginBottom:12}}>
+            <ul>
+              {endStandings.map((s,idx)=>(
+                <li key={s.playerId}>{idx+1}. {s.nickname || s.playerId} {s.avatar ? <span style={{marginLeft:6}}>{avatarToEmoji(s.avatar)}</span> : null} - {s.score}</li>
+              ))}
+            </ul>
+          </div>
+          <div style={{display:'flex', gap:8, justifyContent:'flex-end'}}>
+            <button onClick={async ()=> { try { await api.post(`/api/games/${code}/restart`) } catch {} navigate(`/lobby?code=${code}`) }}>Regresar a la sala</button>
+            <button onClick={()=> { if (window.opener && !window.opener.closed) window.close(); else navigate('/') }}>Salir</button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   )
+}
+
+// Mapeo simple de nombre de color a color visible en tablero/leyenda
+function colorToHex(name){
+  switch((name||'').toUpperCase()){
+    case 'YELLOW': return '#FFD700'
+    case 'PINK': return '#FF69B4'
+    case 'PURPLE': return '#800080'
+    case 'GREEN': return '#2E8B57'
+    case 'WHITE': return '#FFFFFF'
+    default: return '#CCCCCC'
+  }
+}
+
+// Simple mapping from avatar name to an emoji marker
+function avatarToEmoji(name){
+  switch((name||'').toUpperCase()){
+    case 'CAT': return '😺'
+    case 'DOG': return '🐶'
+    case 'ROBOT': return '🤖'
+    case 'NINJA': return '🥷'
+    case 'ALIEN': return '👽'
+    default: return '⭐'
+  }
 }

@@ -6,6 +6,7 @@ export default function Login(){
   const nav = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [guestNick, setGuestNick] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
@@ -15,7 +16,8 @@ export default function Login(){
       const res = await api.post('/api/auth/guest')
       localStorage.setItem('cc_token', res.data.token)
       localStorage.setItem('cc_userId', res.data.userData.id)
-      localStorage.setItem('cc_nickname', res.data.userData.nickname)
+      const nick = (guestNick || '').trim() || res.data.userData.nickname
+      localStorage.setItem('cc_nickname', nick)
       nav('/lobby')
     }catch(err){ setError(err.message) }finally{ setLoading(false) }
   }
@@ -42,6 +44,9 @@ export default function Login(){
         </div>
       </form>
       <div style={{marginTop:12}}>
+        <div style={{marginBottom:8}}>
+          <input placeholder="Nombre de jugador (invitado)" value={guestNick} onChange={e=>setGuestNick(e.target.value)} />
+        </div>
         <button onClick={guest} disabled={loading}>Entrar como invitado</button>
         <p style={{marginTop:8}}>o <a href="/register">registrarse</a></p>
       </div>

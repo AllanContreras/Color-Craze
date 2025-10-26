@@ -1,0 +1,503 @@
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.5.5)
+
+2025-10-21T11:52:37.967-05:00  INFO 3256 --- [Color-craze] [           main] com.Color_craze.ColorCrazeApplication    : Starting ColorCrazeApplication v0.0.1-SNAPSHOT using Java 21.0.8 with PID 3256 (C:\Users\allan\Downloads\Color-craze-Backend-main\Color-craze-Backend-main\target\Color-craze-0.0.1-SNAPSHOT.jar started by allan in C:\Users\allan\Downloads\Color-craze-Backend-main\Color-craze-Backend-main)
+2025-10-21T11:52:37.982-05:00  INFO 3256 --- [Color-craze] [           main] com.Color_craze.ColorCrazeApplication    : No active profile set, falling back to 1 default profile: "default"
+2025-10-21T11:52:39.812-05:00  INFO 3256 --- [Color-craze] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data MongoDB repositories in DEFAULT mode.
+2025-10-21T11:52:39.929-05:00  INFO 3256 --- [Color-craze] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 102 ms. Found 2 MongoDB repository interfaces.
+2025-10-21T11:52:41.372-05:00  INFO 3256 --- [Color-craze] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2025-10-21T11:52:41.405-05:00  INFO 3256 --- [Color-craze] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-10-21T11:52:41.406-05:00  INFO 3256 --- [Color-craze] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.44]
+2025-10-21T11:52:41.487-05:00  INFO 3256 --- [Color-craze] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-10-21T11:52:41.489-05:00  INFO 3256 --- [Color-craze] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 3416 ms
+2025-10-21T11:52:43.270-05:00  INFO 3256 --- [Color-craze] [           main] eAuthenticationProviderManagerConfigurer : Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
+2025-10-21T11:52:43.280-05:00  WARN 3256 --- [Color-craze] [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used by Spring Security for automatically configuring username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider. If the current configuration is intentional, to turn off this warning, increase the logging level of 'org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer' to ERROR
+2025-10-21T11:52:45.413-05:00  INFO 3256 --- [Color-craze] [           main] o.s.m.s.b.SimpleBrokerMessageHandler     : Starting...
+2025-10-21T11:52:45.416-05:00  INFO 3256 --- [Color-craze] [           main] o.s.m.s.b.SimpleBrokerMessageHandler     : BrokerAvailabilityEvent[available=true, SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@6bd2f039]]
+2025-10-21T11:52:45.417-05:00  INFO 3256 --- [Color-craze] [           main] o.s.m.s.b.SimpleBrokerMessageHandler     : Started.
+2025-10-21T11:52:45.440-05:00  INFO 3256 --- [Color-craze] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2025-10-21T11:52:45.473-05:00  INFO 3256 --- [Color-craze] [           main] com.Color_craze.ColorCrazeApplication    : Started ColorCrazeApplication in 8.508 seconds (process running for 9.691)
+2025-10-21T11:52:45.802-05:00  INFO 3256 --- [Color-craze] [nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-10-21T11:52:45.804-05:00  INFO 3256 --- [Color-craze] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2025-10-21T11:52:45.806-05:00  INFO 3256 --- [Color-craze] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+[DEBUG] CorrelationId asignado: c3041140-c710-49dc-b02d-cd5e1530d0ef
+2025-10-21T11:52:45.892-05:00  INFO 3256 --- [Color-craze] [nio-8080-exec-1] com.Color_craze.aop.LoggingAspect        : ==> Entering method [AuthController.guestLogin()] with arguments: []
+2025-10-21T11:52:46.168-05:00  INFO 3256 --- [Color-craze] [nio-8080-exec-1] com.Color_craze.aop.LoggingAspect        : <== Exiting method [AuthController.guestLogin()] with result: <200 OK OK,AuthResponse[token=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJndWVzdF83MDQyYjNiZC1mMzc3LTRkY2MtOWE5Mi1jNzcwMzlmZTU2M2NAZXhhbXBsZS5jb20iLCJpYXQiOjE3NjEwNjU1NjYsImV4cCI6MTc2MTA2NzM2Nn0.20Z7Jzf3yCGZDb7eANU7puAu3degTh8rYsPPNGrj6ZQ, refreshToken=eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiVVNFUiIsInN1YiI6Imd1ZXN0XzcwNDJiM2JkLWYzNzctNGRjYy05YTkyLWM3NzAzOWZlNTYzY0BleGFtcGxlLmNvbSIsImlhdCI6MTc2MTA2NTU2NiwiZXhwIjoxNzYxMDY5MTY2fQ.W4xQMvPCgedPkwwefXylX-6DM8ZO9WANy0ctzZQHePc, userData=UserDetailsResponse[id=7042b3bd-f377-4dcc-9a92-c77039fe563c, email=guest_7042b3bd-f377-4dcc-9a92-c77039fe563c@example.com, nickname=Guest_7042b3bd]],[]>. Execution time: 273ms
+[DEBUG] CorrelationId asignado: db820490-fc8b-437b-bb98-3f00494afced
+[DEBUG] CorrelationId asignado: 694bbe55-b155-47c3-94f5-2e9f6e225ef8
+[DEBUG] CorrelationId asignado: d4dbc7a9-36d6-4c06-9a10-0aeb4bad902d
+2025-10-21T11:53:03.957-05:00  INFO 3256 --- [Color-craze] [nio-8080-exec-2] com.Color_craze.aop.LoggingAspect        : ==> Entering method [GameController.getGame(..)] with arguments: [NHV2W2]
+[DEBUG] CorrelationId asignado: 84dfbd7c-33ba-484d-84d4-48023b7beeb2
+[DEBUG] CorrelationId asignado: 2e0686a6-4dd3-4cf3-bac5-0c626a888aaf
+2025-10-21T11:53:04.903-05:00  INFO 3256 --- [Color-craze] [nio-8080-exec-2] com.Color_craze.aop.LoggingAspect        : <== Exiting method [GameController.getGame(..)] with result: <200 OK OK,GameInfoResponse[code=NHV2W2, status=PLAYING, joinDeadlineMs=1761065287666, players=[PlayerInfo[playerId=68f09456d035a8c137be0292, nickname=allan, color=PINK, score=0]]],[]>. Execution time: 944ms
+[DEBUG] CorrelationId asignado: 9d6cee45-306f-4f67-8066-d8460d9de51f
+2025-10-21T11:53:04.941-05:00  INFO 3256 --- [Color-craze] [nio-8080-exec-8] com.Color_craze.aop.LoggingAspect        : ==> Entering method [GameController.getGame(..)] with arguments: [NHV2W2]
+2025-10-21T11:53:05.034-05:00  INFO 3256 --- [Color-craze] [nio-8080-exec-8] com.Color_craze.aop.LoggingAspect        : <== Exiting method [GameController.getGame(..)] with result: <200 OK OK,GameInfoResponse[code=NHV2W2, status=PLAYING, joinDeadlineMs=1761065287666, players=[PlayerInfo[playerId=68f09456d035a8c137be0292, nickname=allan, color=PINK, score=0]]],[]>. Execution time: 92ms
+[DEBUG] CorrelationId asignado: f9b621ba-0ab0-4265-a18c-0e3ca507d91d
+2025-10-21T11:53:06.066-05:00  INFO 3256 --- [Color-craze] [nio-8080-exec-1] com.Color_craze.aop.LoggingAspect        : ==> Entering method [GameController.getGame(..)] with arguments: [NHV2W2]
+[DEBUG] CorrelationId asignado: 7ba7f9be-b073-4b79-96e8-7b0ff4f9d492
+[DEBUG] CorrelationId asignado: 67f290ee-6d1c-46ef-ae9f-05ad87e6e28d
+[DEBUG] CorrelationId asignado: e68aa62d-2b9e-4179-9ca9-74920d0fe5c7
+[DEBUG] CorrelationId asignado: 4261a5c6-1dd3-477a-ba30-8a626ea5b921
+2025-10-21T11:53:06.160-05:00  INFO 3256 --- [Color-craze] [nio-8080-exec-1] com.Color_craze.aop.LoggingAspect        : <== Exiting method [GameController.getGame(..)] with result: <200 OK OK,GameInfoResponse[code=NHV2W2, status=PLAYING, joinDeadlineMs=1761065287666, players=[PlayerInfo[playerId=68f09456d035a8c137be0292, nickname=allan, color=PINK, score=0]]],[]>. Execution time: 93ms
+[DEBUG] CorrelationId asignado: 85ce470d-2aa8-4883-9cda-c9483c2857a6
+2025-10-21T11:53:06.172-05:00  INFO 3256 --- [Color-craze] [nio-8080-exec-8] com.Color_craze.aop.LoggingAspect        : ==> Entering method [GameController.getGame(..)] with arguments: [NHV2W2]
+2025-10-21T11:53:06.266-05:00  INFO 3256 --- [Color-craze] [nio-8080-exec-8] com.Color_craze.aop.LoggingAspect        : <== Exiting method [GameController.getGame(..)] with result: <200 OK OK,GameInfoResponse[code=NHV2W2, status=PLAYING, joinDeadlineMs=1761065287666, players=[PlayerInfo[playerId=68f09456d035a8c137be0292, nickname=allan, color=PINK, score=0]]],[]>. Execution time: 93ms
+2025-10-21T11:53:45.416-05:00  INFO 3256 --- [Color-craze] [essageBroker-11] o.s.w.s.c.WebSocketMessageBrokerStats    : WebSocketSession[2 current WS(2)-HttpStream(0)-HttpPoll(0), 4 total, 0 closed abnormally (0 connect failure, 0 send limit, 0 transport error)], stompSubProtocol[processed CONNECT(2)-CONNECTED(2)-DISCONNECT(0)], stompBrokerRelay[null], inboundChannel[pool size = 24, active threads = 0, queued tasks = 0, completed tasks = 30], outboundChannel[pool size = 4, active threads = 0, queued tasks = 0, completed tasks = 4], sockJsScheduler[pool size = 12, active threads = 1, queued tasks = 3, completed tasks = 11]
+[DEBUG] CorrelationId asignado: f7c9fddb-9d84-4536-87bd-1dfc6e511d73
+2025-10-21T11:54:13.700-05:00  INFO 3256 --- [Color-craze] [nio-8080-exec-2] com.Color_craze.aop.LoggingAspect        : ==> Entering method [AuthController.login(..)] with arguments: [LoginRequest[email=allancontreras009@gmail.com, password=hola1234]]
+Entró al método login con LoginRequest[email=allancontreras009@gmail.com, password=hola1234]
+[DEBUG] Consultando en colección 'auths' el email: allancontreras009@gmail.com
+[DEBUG] Resultado de la consulta: Optional[AuthUser(id=68f09456d035a8c137be0292, email=allancontreras009@gmail.com, password=$2a$10$tnJUY0FWc5hsu0pycvs6X.jFO6PKJgpHjM0RviaDucLuL7msEveeu, nickname=allan)]
+[DEBUG] Buscando usuario en MongoDB por email: allancontreras009@gmail.com
+[DEBUG] Usuario encontrado: AuthUser(id=68f09456d035a8c137be0292, email=allancontreras009@gmail.com, password=$2a$10$tnJUY0FWc5hsu0pycvs6X.jFO6PKJgpHjM0RviaDucLuL7msEveeu, nickname=allan)
+Antes de retornar AuthResponse[token=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhbGxhbmNvbnRyZXJhczAwOUBnbWFpbC5jb20iLCJpYXQiOjE3NjEwNjU2NTQsImV4cCI6MTc2MTA2NzQ1NH0.yUHFT7URC-i315XLWw61yGfxXJgngL_kbG8tpLbQd24, refreshToken=eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiVVNFUiIsInN1YiI6ImFsbGFuY29udHJlcmFzMDA5QGdtYWlsLmNvbSIsImlhdCI6MTc2MTA2NTY1NCwiZXhwIjoxNzYxMDY5MjU0fQ.YZ_8nnH8PIyjy3aRz3GSK2poZHadNYJqXrBAbidLdZk, userData=UserDetailsResponse[id=68f09456d035a8c137be0292, email=allancontreras009@gmail.com, nickname=allan]]
+2025-10-21T11:54:14.230-05:00  INFO 3256 --- [Color-craze] [nio-8080-exec-2] com.Color_craze.aop.LoggingAspect        : <== Exiting method [AuthController.login(..)] with result: <200 OK OK,AuthResponse[token=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhbGxhbmNvbnRyZXJhczAwOUBnbWFpbC5jb20iLCJpYXQiOjE3NjEwNjU2NTQsImV4cCI6MTc2MTA2NzQ1NH0.yUHFT7URC-i315XLWw61yGfxXJgngL_kbG8tpLbQd24, refreshToken=eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiVVNFUiIsInN1YiI6ImFsbGFuY29udHJlcmFzMDA5QGdtYWlsLmNvbSIsImlhdCI6MTc2MTA2NTY1NCwiZXhwIjoxNzYxMDY5MjU0fQ.YZ_8nnH8PIyjy3aRz3GSK2poZHadNYJqXrBAbidLdZk, userData=UserDetailsResponse[id=68f09456d035a8c137be0292, email=allancontreras009@gmail.com, nickname=allan]],[]>. Execution time: 525ms
+[DEBUG] CorrelationId asignado: 6865be4b-964a-4819-bf84-4dc858d1e76f
+2025-10-21T11:54:18.207-05:00  INFO 3256 --- [Color-craze] [nio-8080-exec-1] com.Color_craze.aop.LoggingAspect        : ==> Entering method [GameController.createGame()] with arguments: []
+2025-10-21T11:54:18.514-05:00  INFO 3256 --- [Color-craze] [nio-8080-exec-1] com.Color_craze.aop.LoggingAspect        : <== Exiting method [GameController.createGame()] with result: <200 OK OK,CreateGameResponse[code=QETRAJ],[]>. Execution time: 306ms
+[DEBUG] CorrelationId asignado: 94059cda-4618-45e0-ab6f-706cc6772cc5
+[DEBUG] CorrelationId asignado: 0c4be402-5d8c-4edd-a5b8-aa87081c5094
+2025-10-21T11:54:18.561-05:00  INFO 3256 --- [Color-craze] [io-8080-exec-10] com.Color_craze.aop.LoggingAspect        : ==> Entering method [GameController.join(..)] with arguments: [QETRAJ, JoinGameRequest[playerId=68f09456d035a8c137be0292, nickname=allan, color=PINK]]
+2025-10-21T11:54:18.999-05:00  INFO 3256 --- [Color-craze] [io-8080-exec-10] com.Color_craze.aop.LoggingAspect        : <== Exiting method [GameController.join(..)] with result: <200 OK OK,[]>. Execution time: 436ms
+[DEBUG] CorrelationId asignado: a3d85b8d-6b8e-478d-86f3-5084ab32bc04
+[DEBUG] CorrelationId asignado: 95a538b1-3b87-466e-8ec1-924add1f11cf
+[DEBUG] CorrelationId asignado: c89101a2-9035-44b2-8941-6995a416f342
+[DEBUG] CorrelationId asignado: 34a1dea0-c21e-410a-b993-e019934c56ea
+[DEBUG] CorrelationId asignado: a21f8234-8b75-4ec1-9bfd-0bb57248de93
+2025-10-21T11:54:19.089-05:00  INFO 3256 --- [Color-craze] [nio-8080-exec-4] com.Color_craze.aop.LoggingAspect        : ==> Entering method [GameController.getGame(..)] with arguments: [QETRAJ]
+[DEBUG] CorrelationId asignado: 7cc02176-876d-41d8-ad52-57d97e8d28ac
+2025-10-21T11:54:19.113-05:00  INFO 3256 --- [Color-craze] [nio-8080-exec-7] o.s.w.s.m.SubProtocolWebSocketHandler    : No messages received after 73009 ms. Closing WebSocketServerSockJsSession[id=zd1flhsb].
+[DEBUG] CorrelationId asignado: e8df6fe0-7195-4e03-a7e3-45c1165347e0
+2025-10-21T11:54:19.231-05:00  INFO 3256 --- [Color-craze] [nio-8080-exec-4] com.Color_craze.aop.LoggingAspect        : <== Exiting method [GameController.getGame(..)] with result: <200 OK OK,GameInfoResponse[code=QETRAJ, status=WAITING, joinDeadlineMs=1761065678328, players=[PlayerInfo[playerId=68f09456d035a8c137be0292, nickname=allan, color=PINK, score=0]]],[]>. Execution time: 141ms
+[DEBUG] CorrelationId asignado: 6fea0949-9ad0-4f52-b016-92632bf6b5c6
+2025-10-21T11:54:19.241-05:00  INFO 3256 --- [Color-craze] [nio-8080-exec-3] com.Color_craze.aop.LoggingAspect        : ==> Entering method [GameController.getGame(..)] with arguments: [QETRAJ]
+2025-10-21T11:54:19.335-05:00  INFO 3256 --- [Color-craze] [nio-8080-exec-3] com.Color_craze.aop.LoggingAspect        : <== Exiting method [GameController.getGame(..)] with result: <200 OK OK,GameInfoResponse[code=QETRAJ, status=WAITING, joinDeadlineMs=1761065678328, players=[PlayerInfo[playerId=68f09456d035a8c137be0292, nickname=allan, color=PINK, score=0]]],[]>. Execution time: 93ms
+2025-10-21T11:54:42.584-05:00 ERROR 3256 --- [Color-craze] [boundChannel-40] .WebSocketAnnotationMethodMessageHandler : Unhandled exception from message handler method
+
+java.lang.IllegalArgumentException: Invalid UUID string: 68f09456d035a8c137be0292
+	at java.base/java.util.UUID.fromString1(UUID.java:282) ~[na:na]
+	at java.base/java.util.UUID.fromString(UUID.java:260) ~[na:na]
+	at com.Color_craze.board.services.BoardService.ensurePlayerOnBoard(BoardService.java:68) ~[!/:0.0.1-SNAPSHOT]
+	at com.Color_craze.board.services.GameService.handlePlayerMove(GameService.java:105) ~[!/:0.0.1-SNAPSHOT]
+	at com.Color_craze.board.controllers.GameSocketController.handlePlayerMove(GameSocketController.java:25) ~[!/:0.0.1-SNAPSHOT]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580) ~[na:na]
+	at org.springframework.messaging.handler.invocation.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:169) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.InvocableHandlerMethod.invoke(InvocableHandlerMethod.java:119) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMatch(AbstractMethodMessageHandler.java:568) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.simp.annotation.support.SimpAnnotationMethodMessageHandler.handleMatch(SimpAnnotationMethodMessageHandler.java:530) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.simp.annotation.support.SimpAnnotationMethodMessageHandler.handleMatch(SimpAnnotationMethodMessageHandler.java:93) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMessageInternal(AbstractMethodMessageHandler.java:522) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMessage(AbstractMethodMessageHandler.java:457) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.support.ExecutorSubscribableChannel$SendTask.run(ExecutorSubscribableChannel.java:152) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[na:na]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[na:na]
+	at java.base/java.lang.Thread.run(Thread.java:1583) ~[na:na]
+
+2025-10-21T11:54:43.461-05:00 ERROR 3256 --- [Color-craze] [boundChannel-43] .WebSocketAnnotationMethodMessageHandler : Unhandled exception from message handler method
+
+java.lang.IllegalArgumentException: Invalid UUID string: 68f09456d035a8c137be0292
+	at java.base/java.util.UUID.fromString1(UUID.java:282) ~[na:na]
+	at java.base/java.util.UUID.fromString(UUID.java:260) ~[na:na]
+	at com.Color_craze.board.services.BoardService.ensurePlayerOnBoard(BoardService.java:68) ~[!/:0.0.1-SNAPSHOT]
+	at com.Color_craze.board.services.GameService.handlePlayerMove(GameService.java:105) ~[!/:0.0.1-SNAPSHOT]
+	at com.Color_craze.board.controllers.GameSocketController.handlePlayerMove(GameSocketController.java:25) ~[!/:0.0.1-SNAPSHOT]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580) ~[na:na]
+	at org.springframework.messaging.handler.invocation.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:169) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.InvocableHandlerMethod.invoke(InvocableHandlerMethod.java:119) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMatch(AbstractMethodMessageHandler.java:568) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.simp.annotation.support.SimpAnnotationMethodMessageHandler.handleMatch(SimpAnnotationMethodMessageHandler.java:530) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.simp.annotation.support.SimpAnnotationMethodMessageHandler.handleMatch(SimpAnnotationMethodMessageHandler.java:93) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMessageInternal(AbstractMethodMessageHandler.java:522) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMessage(AbstractMethodMessageHandler.java:457) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.support.ExecutorSubscribableChannel$SendTask.run(ExecutorSubscribableChannel.java:152) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[na:na]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[na:na]
+	at java.base/java.lang.Thread.run(Thread.java:1583) ~[na:na]
+
+2025-10-21T11:54:43.598-05:00 ERROR 3256 --- [Color-craze] [nboundChannel-5] .WebSocketAnnotationMethodMessageHandler : Unhandled exception from message handler method
+
+java.lang.IllegalArgumentException: Invalid UUID string: 68f09456d035a8c137be0292
+	at java.base/java.util.UUID.fromString1(UUID.java:282) ~[na:na]
+	at java.base/java.util.UUID.fromString(UUID.java:260) ~[na:na]
+	at com.Color_craze.board.services.BoardService.ensurePlayerOnBoard(BoardService.java:68) ~[!/:0.0.1-SNAPSHOT]
+	at com.Color_craze.board.services.GameService.handlePlayerMove(GameService.java:105) ~[!/:0.0.1-SNAPSHOT]
+	at com.Color_craze.board.controllers.GameSocketController.handlePlayerMove(GameSocketController.java:25) ~[!/:0.0.1-SNAPSHOT]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580) ~[na:na]
+	at org.springframework.messaging.handler.invocation.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:169) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.InvocableHandlerMethod.invoke(InvocableHandlerMethod.java:119) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMatch(AbstractMethodMessageHandler.java:568) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.simp.annotation.support.SimpAnnotationMethodMessageHandler.handleMatch(SimpAnnotationMethodMessageHandler.java:530) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.simp.annotation.support.SimpAnnotationMethodMessageHandler.handleMatch(SimpAnnotationMethodMessageHandler.java:93) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMessageInternal(AbstractMethodMessageHandler.java:522) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMessage(AbstractMethodMessageHandler.java:457) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.support.ExecutorSubscribableChannel$SendTask.run(ExecutorSubscribableChannel.java:152) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[na:na]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[na:na]
+	at java.base/java.lang.Thread.run(Thread.java:1583) ~[na:na]
+
+2025-10-21T11:54:43.732-05:00 ERROR 3256 --- [Color-craze] [boundChannel-25] .WebSocketAnnotationMethodMessageHandler : Unhandled exception from message handler method
+
+java.lang.IllegalArgumentException: Invalid UUID string: 68f09456d035a8c137be0292
+	at java.base/java.util.UUID.fromString1(UUID.java:282) ~[na:na]
+	at java.base/java.util.UUID.fromString(UUID.java:260) ~[na:na]
+	at com.Color_craze.board.services.BoardService.ensurePlayerOnBoard(BoardService.java:68) ~[!/:0.0.1-SNAPSHOT]
+	at com.Color_craze.board.services.GameService.handlePlayerMove(GameService.java:105) ~[!/:0.0.1-SNAPSHOT]
+	at com.Color_craze.board.controllers.GameSocketController.handlePlayerMove(GameSocketController.java:25) ~[!/:0.0.1-SNAPSHOT]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580) ~[na:na]
+	at org.springframework.messaging.handler.invocation.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:169) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.InvocableHandlerMethod.invoke(InvocableHandlerMethod.java:119) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMatch(AbstractMethodMessageHandler.java:568) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.simp.annotation.support.SimpAnnotationMethodMessageHandler.handleMatch(SimpAnnotationMethodMessageHandler.java:530) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.simp.annotation.support.SimpAnnotationMethodMessageHandler.handleMatch(SimpAnnotationMethodMessageHandler.java:93) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMessageInternal(AbstractMethodMessageHandler.java:522) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMessage(AbstractMethodMessageHandler.java:457) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.support.ExecutorSubscribableChannel$SendTask.run(ExecutorSubscribableChannel.java:152) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[na:na]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[na:na]
+	at java.base/java.lang.Thread.run(Thread.java:1583) ~[na:na]
+
+2025-10-21T11:54:43.857-05:00 ERROR 3256 --- [Color-craze] [boundChannel-28] .WebSocketAnnotationMethodMessageHandler : Unhandled exception from message handler method
+
+java.lang.IllegalArgumentException: Invalid UUID string: 68f09456d035a8c137be0292
+	at java.base/java.util.UUID.fromString1(UUID.java:282) ~[na:na]
+	at java.base/java.util.UUID.fromString(UUID.java:260) ~[na:na]
+	at com.Color_craze.board.services.BoardService.ensurePlayerOnBoard(BoardService.java:68) ~[!/:0.0.1-SNAPSHOT]
+	at com.Color_craze.board.services.GameService.handlePlayerMove(GameService.java:105) ~[!/:0.0.1-SNAPSHOT]
+	at com.Color_craze.board.controllers.GameSocketController.handlePlayerMove(GameSocketController.java:25) ~[!/:0.0.1-SNAPSHOT]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580) ~[na:na]
+	at org.springframework.messaging.handler.invocation.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:169) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.InvocableHandlerMethod.invoke(InvocableHandlerMethod.java:119) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMatch(AbstractMethodMessageHandler.java:568) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.simp.annotation.support.SimpAnnotationMethodMessageHandler.handleMatch(SimpAnnotationMethodMessageHandler.java:530) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.simp.annotation.support.SimpAnnotationMethodMessageHandler.handleMatch(SimpAnnotationMethodMessageHandler.java:93) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMessageInternal(AbstractMethodMessageHandler.java:522) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMessage(AbstractMethodMessageHandler.java:457) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.support.ExecutorSubscribableChannel$SendTask.run(ExecutorSubscribableChannel.java:152) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[na:na]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[na:na]
+	at java.base/java.lang.Thread.run(Thread.java:1583) ~[na:na]
+
+2025-10-21T11:54:44.642-05:00 ERROR 3256 --- [Color-craze] [boundChannel-31] .WebSocketAnnotationMethodMessageHandler : Unhandled exception from message handler method
+
+java.lang.IllegalArgumentException: Invalid UUID string: 68f09456d035a8c137be0292
+	at java.base/java.util.UUID.fromString1(UUID.java:282) ~[na:na]
+	at java.base/java.util.UUID.fromString(UUID.java:260) ~[na:na]
+	at com.Color_craze.board.services.BoardService.ensurePlayerOnBoard(BoardService.java:68) ~[!/:0.0.1-SNAPSHOT]
+	at com.Color_craze.board.services.GameService.handlePlayerMove(GameService.java:105) ~[!/:0.0.1-SNAPSHOT]
+	at com.Color_craze.board.controllers.GameSocketController.handlePlayerMove(GameSocketController.java:25) ~[!/:0.0.1-SNAPSHOT]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580) ~[na:na]
+	at org.springframework.messaging.handler.invocation.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:169) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.InvocableHandlerMethod.invoke(InvocableHandlerMethod.java:119) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMatch(AbstractMethodMessageHandler.java:568) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.simp.annotation.support.SimpAnnotationMethodMessageHandler.handleMatch(SimpAnnotationMethodMessageHandler.java:530) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.simp.annotation.support.SimpAnnotationMethodMessageHandler.handleMatch(SimpAnnotationMethodMessageHandler.java:93) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMessageInternal(AbstractMethodMessageHandler.java:522) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMessage(AbstractMethodMessageHandler.java:457) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.support.ExecutorSubscribableChannel$SendTask.run(ExecutorSubscribableChannel.java:152) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[na:na]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[na:na]
+	at java.base/java.lang.Thread.run(Thread.java:1583) ~[na:na]
+
+2025-10-21T11:54:44.795-05:00 ERROR 3256 --- [Color-craze] [boundChannel-35] .WebSocketAnnotationMethodMessageHandler : Unhandled exception from message handler method
+
+java.lang.IllegalArgumentException: Invalid UUID string: 68f09456d035a8c137be0292
+	at java.base/java.util.UUID.fromString1(UUID.java:282) ~[na:na]
+	at java.base/java.util.UUID.fromString(UUID.java:260) ~[na:na]
+	at com.Color_craze.board.services.BoardService.ensurePlayerOnBoard(BoardService.java:68) ~[!/:0.0.1-SNAPSHOT]
+	at com.Color_craze.board.services.GameService.handlePlayerMove(GameService.java:105) ~[!/:0.0.1-SNAPSHOT]
+	at com.Color_craze.board.controllers.GameSocketController.handlePlayerMove(GameSocketController.java:25) ~[!/:0.0.1-SNAPSHOT]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580) ~[na:na]
+	at org.springframework.messaging.handler.invocation.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:169) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.InvocableHandlerMethod.invoke(InvocableHandlerMethod.java:119) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMatch(AbstractMethodMessageHandler.java:568) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.simp.annotation.support.SimpAnnotationMethodMessageHandler.handleMatch(SimpAnnotationMethodMessageHandler.java:530) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.simp.annotation.support.SimpAnnotationMethodMessageHandler.handleMatch(SimpAnnotationMethodMessageHandler.java:93) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMessageInternal(AbstractMethodMessageHandler.java:522) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMessage(AbstractMethodMessageHandler.java:457) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.support.ExecutorSubscribableChannel$SendTask.run(ExecutorSubscribableChannel.java:152) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[na:na]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[na:na]
+	at java.base/java.lang.Thread.run(Thread.java:1583) ~[na:na]
+
+2025-10-21T11:54:45.592-05:00 ERROR 3256 --- [Color-craze] [boundChannel-37] .WebSocketAnnotationMethodMessageHandler : Unhandled exception from message handler method
+
+java.lang.IllegalArgumentException: Invalid UUID string: 68f09456d035a8c137be0292
+	at java.base/java.util.UUID.fromString1(UUID.java:282) ~[na:na]
+	at java.base/java.util.UUID.fromString(UUID.java:260) ~[na:na]
+	at com.Color_craze.board.services.BoardService.ensurePlayerOnBoard(BoardService.java:68) ~[!/:0.0.1-SNAPSHOT]
+	at com.Color_craze.board.services.GameService.handlePlayerMove(GameService.java:105) ~[!/:0.0.1-SNAPSHOT]
+	at com.Color_craze.board.controllers.GameSocketController.handlePlayerMove(GameSocketController.java:25) ~[!/:0.0.1-SNAPSHOT]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580) ~[na:na]
+	at org.springframework.messaging.handler.invocation.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:169) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.InvocableHandlerMethod.invoke(InvocableHandlerMethod.java:119) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMatch(AbstractMethodMessageHandler.java:568) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.simp.annotation.support.SimpAnnotationMethodMessageHandler.handleMatch(SimpAnnotationMethodMessageHandler.java:530) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.simp.annotation.support.SimpAnnotationMethodMessageHandler.handleMatch(SimpAnnotationMethodMessageHandler.java:93) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMessageInternal(AbstractMethodMessageHandler.java:522) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMessage(AbstractMethodMessageHandler.java:457) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.support.ExecutorSubscribableChannel$SendTask.run(ExecutorSubscribableChannel.java:152) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[na:na]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[na:na]
+	at java.base/java.lang.Thread.run(Thread.java:1583) ~[na:na]
+
+2025-10-21T11:54:45.739-05:00 ERROR 3256 --- [Color-craze] [boundChannel-41] .WebSocketAnnotationMethodMessageHandler : Unhandled exception from message handler method
+
+java.lang.IllegalArgumentException: Invalid UUID string: 68f09456d035a8c137be0292
+	at java.base/java.util.UUID.fromString1(UUID.java:282) ~[na:na]
+	at java.base/java.util.UUID.fromString(UUID.java:260) ~[na:na]
+	at com.Color_craze.board.services.BoardService.ensurePlayerOnBoard(BoardService.java:68) ~[!/:0.0.1-SNAPSHOT]
+	at com.Color_craze.board.services.GameService.handlePlayerMove(GameService.java:105) ~[!/:0.0.1-SNAPSHOT]
+	at com.Color_craze.board.controllers.GameSocketController.handlePlayerMove(GameSocketController.java:25) ~[!/:0.0.1-SNAPSHOT]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580) ~[na:na]
+	at org.springframework.messaging.handler.invocation.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:169) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.InvocableHandlerMethod.invoke(InvocableHandlerMethod.java:119) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMatch(AbstractMethodMessageHandler.java:568) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.simp.annotation.support.SimpAnnotationMethodMessageHandler.handleMatch(SimpAnnotationMethodMessageHandler.java:530) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.simp.annotation.support.SimpAnnotationMethodMessageHandler.handleMatch(SimpAnnotationMethodMessageHandler.java:93) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMessageInternal(AbstractMethodMessageHandler.java:522) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMessage(AbstractMethodMessageHandler.java:457) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.support.ExecutorSubscribableChannel$SendTask.run(ExecutorSubscribableChannel.java:152) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[na:na]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[na:na]
+	at java.base/java.lang.Thread.run(Thread.java:1583) ~[na:na]
+
+2025-10-21T11:54:45.881-05:00 ERROR 3256 --- [Color-craze] [nboundChannel-9] .WebSocketAnnotationMethodMessageHandler : Unhandled exception from message handler method
+
+java.lang.IllegalArgumentException: Invalid UUID string: 68f09456d035a8c137be0292
+	at java.base/java.util.UUID.fromString1(UUID.java:282) ~[na:na]
+	at java.base/java.util.UUID.fromString(UUID.java:260) ~[na:na]
+	at com.Color_craze.board.services.BoardService.ensurePlayerOnBoard(BoardService.java:68) ~[!/:0.0.1-SNAPSHOT]
+	at com.Color_craze.board.services.GameService.handlePlayerMove(GameService.java:105) ~[!/:0.0.1-SNAPSHOT]
+	at com.Color_craze.board.controllers.GameSocketController.handlePlayerMove(GameSocketController.java:25) ~[!/:0.0.1-SNAPSHOT]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580) ~[na:na]
+	at org.springframework.messaging.handler.invocation.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:169) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.InvocableHandlerMethod.invoke(InvocableHandlerMethod.java:119) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMatch(AbstractMethodMessageHandler.java:568) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.simp.annotation.support.SimpAnnotationMethodMessageHandler.handleMatch(SimpAnnotationMethodMessageHandler.java:530) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.simp.annotation.support.SimpAnnotationMethodMessageHandler.handleMatch(SimpAnnotationMethodMessageHandler.java:93) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMessageInternal(AbstractMethodMessageHandler.java:522) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMessage(AbstractMethodMessageHandler.java:457) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.support.ExecutorSubscribableChannel$SendTask.run(ExecutorSubscribableChannel.java:152) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[na:na]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[na:na]
+	at java.base/java.lang.Thread.run(Thread.java:1583) ~[na:na]
+
+2025-10-21T11:54:46.048-05:00 ERROR 3256 --- [Color-craze] [boundChannel-10] .WebSocketAnnotationMethodMessageHandler : Unhandled exception from message handler method
+
+java.lang.IllegalArgumentException: Invalid UUID string: 68f09456d035a8c137be0292
+	at java.base/java.util.UUID.fromString1(UUID.java:282) ~[na:na]
+	at java.base/java.util.UUID.fromString(UUID.java:260) ~[na:na]
+	at com.Color_craze.board.services.BoardService.ensurePlayerOnBoard(BoardService.java:68) ~[!/:0.0.1-SNAPSHOT]
+	at com.Color_craze.board.services.GameService.handlePlayerMove(GameService.java:105) ~[!/:0.0.1-SNAPSHOT]
+	at com.Color_craze.board.controllers.GameSocketController.handlePlayerMove(GameSocketController.java:25) ~[!/:0.0.1-SNAPSHOT]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580) ~[na:na]
+	at org.springframework.messaging.handler.invocation.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:169) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.InvocableHandlerMethod.invoke(InvocableHandlerMethod.java:119) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMatch(AbstractMethodMessageHandler.java:568) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.simp.annotation.support.SimpAnnotationMethodMessageHandler.handleMatch(SimpAnnotationMethodMessageHandler.java:530) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.simp.annotation.support.SimpAnnotationMethodMessageHandler.handleMatch(SimpAnnotationMethodMessageHandler.java:93) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMessageInternal(AbstractMethodMessageHandler.java:522) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMessage(AbstractMethodMessageHandler.java:457) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.support.ExecutorSubscribableChannel$SendTask.run(ExecutorSubscribableChannel.java:152) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[na:na]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[na:na]
+	at java.base/java.lang.Thread.run(Thread.java:1583) ~[na:na]
+
+2025-10-21T11:54:46.208-05:00 ERROR 3256 --- [Color-craze] [boundChannel-27] .WebSocketAnnotationMethodMessageHandler : Unhandled exception from message handler method
+
+java.lang.IllegalArgumentException: Invalid UUID string: 68f09456d035a8c137be0292
+	at java.base/java.util.UUID.fromString1(UUID.java:282) ~[na:na]
+	at java.base/java.util.UUID.fromString(UUID.java:260) ~[na:na]
+	at com.Color_craze.board.services.BoardService.ensurePlayerOnBoard(BoardService.java:68) ~[!/:0.0.1-SNAPSHOT]
+	at com.Color_craze.board.services.GameService.handlePlayerMove(GameService.java:105) ~[!/:0.0.1-SNAPSHOT]
+	at com.Color_craze.board.controllers.GameSocketController.handlePlayerMove(GameSocketController.java:25) ~[!/:0.0.1-SNAPSHOT]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580) ~[na:na]
+	at org.springframework.messaging.handler.invocation.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:169) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.InvocableHandlerMethod.invoke(InvocableHandlerMethod.java:119) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMatch(AbstractMethodMessageHandler.java:568) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.simp.annotation.support.SimpAnnotationMethodMessageHandler.handleMatch(SimpAnnotationMethodMessageHandler.java:530) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.simp.annotation.support.SimpAnnotationMethodMessageHandler.handleMatch(SimpAnnotationMethodMessageHandler.java:93) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMessageInternal(AbstractMethodMessageHandler.java:522) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMessage(AbstractMethodMessageHandler.java:457) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.support.ExecutorSubscribableChannel$SendTask.run(ExecutorSubscribableChannel.java:152) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[na:na]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[na:na]
+	at java.base/java.lang.Thread.run(Thread.java:1583) ~[na:na]
+
+2025-10-21T11:54:46.450-05:00 ERROR 3256 --- [Color-craze] [boundChannel-29] .WebSocketAnnotationMethodMessageHandler : Unhandled exception from message handler method
+
+java.lang.IllegalArgumentException: Invalid UUID string: 68f09456d035a8c137be0292
+	at java.base/java.util.UUID.fromString1(UUID.java:282) ~[na:na]
+	at java.base/java.util.UUID.fromString(UUID.java:260) ~[na:na]
+	at com.Color_craze.board.services.BoardService.ensurePlayerOnBoard(BoardService.java:68) ~[!/:0.0.1-SNAPSHOT]
+	at com.Color_craze.board.services.GameService.handlePlayerMove(GameService.java:105) ~[!/:0.0.1-SNAPSHOT]
+	at com.Color_craze.board.controllers.GameSocketController.handlePlayerMove(GameSocketController.java:25) ~[!/:0.0.1-SNAPSHOT]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580) ~[na:na]
+	at org.springframework.messaging.handler.invocation.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:169) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.InvocableHandlerMethod.invoke(InvocableHandlerMethod.java:119) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMatch(AbstractMethodMessageHandler.java:568) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.simp.annotation.support.SimpAnnotationMethodMessageHandler.handleMatch(SimpAnnotationMethodMessageHandler.java:530) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.simp.annotation.support.SimpAnnotationMethodMessageHandler.handleMatch(SimpAnnotationMethodMessageHandler.java:93) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMessageInternal(AbstractMethodMessageHandler.java:522) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMessage(AbstractMethodMessageHandler.java:457) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.support.ExecutorSubscribableChannel$SendTask.run(ExecutorSubscribableChannel.java:152) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[na:na]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[na:na]
+	at java.base/java.lang.Thread.run(Thread.java:1583) ~[na:na]
+
+2025-10-21T11:54:46.664-05:00 ERROR 3256 --- [Color-craze] [boundChannel-33] .WebSocketAnnotationMethodMessageHandler : Unhandled exception from message handler method
+
+java.lang.IllegalArgumentException: Invalid UUID string: 68f09456d035a8c137be0292
+	at java.base/java.util.UUID.fromString1(UUID.java:282) ~[na:na]
+	at java.base/java.util.UUID.fromString(UUID.java:260) ~[na:na]
+	at com.Color_craze.board.services.BoardService.ensurePlayerOnBoard(BoardService.java:68) ~[!/:0.0.1-SNAPSHOT]
+	at com.Color_craze.board.services.GameService.handlePlayerMove(GameService.java:105) ~[!/:0.0.1-SNAPSHOT]
+	at com.Color_craze.board.controllers.GameSocketController.handlePlayerMove(GameSocketController.java:25) ~[!/:0.0.1-SNAPSHOT]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580) ~[na:na]
+	at org.springframework.messaging.handler.invocation.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:169) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.InvocableHandlerMethod.invoke(InvocableHandlerMethod.java:119) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMatch(AbstractMethodMessageHandler.java:568) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.simp.annotation.support.SimpAnnotationMethodMessageHandler.handleMatch(SimpAnnotationMethodMessageHandler.java:530) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.simp.annotation.support.SimpAnnotationMethodMessageHandler.handleMatch(SimpAnnotationMethodMessageHandler.java:93) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMessageInternal(AbstractMethodMessageHandler.java:522) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMessage(AbstractMethodMessageHandler.java:457) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.support.ExecutorSubscribableChannel$SendTask.run(ExecutorSubscribableChannel.java:152) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[na:na]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[na:na]
+	at java.base/java.lang.Thread.run(Thread.java:1583) ~[na:na]
+
+2025-10-21T11:54:47.014-05:00 ERROR 3256 --- [Color-craze] [boundChannel-36] .WebSocketAnnotationMethodMessageHandler : Unhandled exception from message handler method
+
+java.lang.IllegalArgumentException: Invalid UUID string: 68f09456d035a8c137be0292
+	at java.base/java.util.UUID.fromString1(UUID.java:282) ~[na:na]
+	at java.base/java.util.UUID.fromString(UUID.java:260) ~[na:na]
+	at com.Color_craze.board.services.BoardService.ensurePlayerOnBoard(BoardService.java:68) ~[!/:0.0.1-SNAPSHOT]
+	at com.Color_craze.board.services.GameService.handlePlayerMove(GameService.java:105) ~[!/:0.0.1-SNAPSHOT]
+	at com.Color_craze.board.controllers.GameSocketController.handlePlayerMove(GameSocketController.java:25) ~[!/:0.0.1-SNAPSHOT]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580) ~[na:na]
+	at org.springframework.messaging.handler.invocation.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:169) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.InvocableHandlerMethod.invoke(InvocableHandlerMethod.java:119) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMatch(AbstractMethodMessageHandler.java:568) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.simp.annotation.support.SimpAnnotationMethodMessageHandler.handleMatch(SimpAnnotationMethodMessageHandler.java:530) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.simp.annotation.support.SimpAnnotationMethodMessageHandler.handleMatch(SimpAnnotationMethodMessageHandler.java:93) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMessageInternal(AbstractMethodMessageHandler.java:522) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMessage(AbstractMethodMessageHandler.java:457) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.support.ExecutorSubscribableChannel$SendTask.run(ExecutorSubscribableChannel.java:152) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[na:na]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[na:na]
+	at java.base/java.lang.Thread.run(Thread.java:1583) ~[na:na]
+
+2025-10-21T11:54:47.184-05:00 ERROR 3256 --- [Color-craze] [boundChannel-38] .WebSocketAnnotationMethodMessageHandler : Unhandled exception from message handler method
+
+java.lang.IllegalArgumentException: Invalid UUID string: 68f09456d035a8c137be0292
+	at java.base/java.util.UUID.fromString1(UUID.java:282) ~[na:na]
+	at java.base/java.util.UUID.fromString(UUID.java:260) ~[na:na]
+	at com.Color_craze.board.services.BoardService.ensurePlayerOnBoard(BoardService.java:68) ~[!/:0.0.1-SNAPSHOT]
+	at com.Color_craze.board.services.GameService.handlePlayerMove(GameService.java:105) ~[!/:0.0.1-SNAPSHOT]
+	at com.Color_craze.board.controllers.GameSocketController.handlePlayerMove(GameSocketController.java:25) ~[!/:0.0.1-SNAPSHOT]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580) ~[na:na]
+	at org.springframework.messaging.handler.invocation.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:169) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.InvocableHandlerMethod.invoke(InvocableHandlerMethod.java:119) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMatch(AbstractMethodMessageHandler.java:568) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.simp.annotation.support.SimpAnnotationMethodMessageHandler.handleMatch(SimpAnnotationMethodMessageHandler.java:530) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.simp.annotation.support.SimpAnnotationMethodMessageHandler.handleMatch(SimpAnnotationMethodMessageHandler.java:93) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMessageInternal(AbstractMethodMessageHandler.java:522) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMessage(AbstractMethodMessageHandler.java:457) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.support.ExecutorSubscribableChannel$SendTask.run(ExecutorSubscribableChannel.java:152) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[na:na]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[na:na]
+	at java.base/java.lang.Thread.run(Thread.java:1583) ~[na:na]
+
+2025-10-21T11:54:47.343-05:00 ERROR 3256 --- [Color-craze] [boundChannel-40] .WebSocketAnnotationMethodMessageHandler : Unhandled exception from message handler method
+
+java.lang.IllegalArgumentException: Invalid UUID string: 68f09456d035a8c137be0292
+	at java.base/java.util.UUID.fromString1(UUID.java:282) ~[na:na]
+	at java.base/java.util.UUID.fromString(UUID.java:260) ~[na:na]
+	at com.Color_craze.board.services.BoardService.ensurePlayerOnBoard(BoardService.java:68) ~[!/:0.0.1-SNAPSHOT]
+	at com.Color_craze.board.services.GameService.handlePlayerMove(GameService.java:105) ~[!/:0.0.1-SNAPSHOT]
+	at com.Color_craze.board.controllers.GameSocketController.handlePlayerMove(GameSocketController.java:25) ~[!/:0.0.1-SNAPSHOT]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580) ~[na:na]
+	at org.springframework.messaging.handler.invocation.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:169) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.InvocableHandlerMethod.invoke(InvocableHandlerMethod.java:119) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMatch(AbstractMethodMessageHandler.java:568) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.simp.annotation.support.SimpAnnotationMethodMessageHandler.handleMatch(SimpAnnotationMethodMessageHandler.java:530) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.simp.annotation.support.SimpAnnotationMethodMessageHandler.handleMatch(SimpAnnotationMethodMessageHandler.java:93) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMessageInternal(AbstractMethodMessageHandler.java:522) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.handler.invocation.AbstractMethodMessageHandler.handleMessage(AbstractMethodMessageHandler.java:457) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at org.springframework.messaging.support.ExecutorSubscribableChannel$SendTask.run(ExecutorSubscribableChannel.java:152) ~[spring-messaging-6.2.10.jar!/:6.2.10]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[na:na]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[na:na]
+	at java.base/java.lang.Thread.run(Thread.java:1583) ~[na:na]
+
+[DEBUG] CorrelationId asignado: f04fcbd7-3af4-48db-b556-bab1ed994457
+[DEBUG] CorrelationId asignado: 3837f6b9-5821-4db5-a442-d6f93551df92
+2025-10-21T11:56:28.050-05:00  INFO 3256 --- [Color-craze] [nio-8080-exec-7] com.Color_craze.aop.LoggingAspect        : ==> Entering method [AuthController.guestLogin()] with arguments: []
+2025-10-21T11:56:28.054-05:00  INFO 3256 --- [Color-craze] [nio-8080-exec-7] com.Color_craze.aop.LoggingAspect        : <== Exiting method [AuthController.guestLogin()] with result: <200 OK OK,AuthResponse[token=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJndWVzdF9iOTIzOTYyZS1jMTU5LTQwNmUtYmYyZC1mYTJjMWE3M2IyYmJAZXhhbXBsZS5jb20iLCJpYXQiOjE3NjEwNjU3ODgsImV4cCI6MTc2MTA2NzU4OH0.m3_fQFWnJM7ObtWJurN3dHRiqwG5AbtawJyNWQOoYU8, refreshToken=eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiVVNFUiIsInN1YiI6Imd1ZXN0X2I5MjM5NjJlLWMxNTktNDA2ZS1iZjJkLWZhMmMxYTczYjJiYkBleGFtcGxlLmNvbSIsImlhdCI6MTc2MTA2NTc4OCwiZXhwIjoxNzYxMDY5Mzg4fQ.74vtQjcQEkMrBCuJomK0BvSIt0ybONoL26GbCbtS8wI, userData=UserDetailsResponse[id=b923962e-c159-406e-bf2d-fa2c1a73b2bb, email=guest_b923962e-c159-406e-bf2d-fa2c1a73b2bb@example.com, nickname=Guest_b923962e]],[]>. Execution time: 3ms
+[DEBUG] CorrelationId asignado: 6feb25e4-b86f-4e4c-a66f-86ad4afdcaee
+2025-10-21T11:56:32.279-05:00  INFO 3256 --- [Color-craze] [nio-8080-exec-8] com.Color_craze.aop.LoggingAspect        : ==> Entering method [GameController.createGame()] with arguments: []
+2025-10-21T11:56:32.485-05:00  INFO 3256 --- [Color-craze] [nio-8080-exec-8] com.Color_craze.aop.LoggingAspect        : <== Exiting method [GameController.createGame()] with result: <200 OK OK,CreateGameResponse[code=L62BPG],[]>. Execution time: 205ms
+[DEBUG] CorrelationId asignado: d9819562-5ed2-4996-94de-97a334e77842
+[DEBUG] CorrelationId asignado: 3180e474-d0f7-46d2-a117-ae2ec5423d72
+2025-10-21T11:56:32.525-05:00  INFO 3256 --- [Color-craze] [io-8080-exec-10] com.Color_craze.aop.LoggingAspect        : ==> Entering method [GameController.join(..)] with arguments: [L62BPG, JoinGameRequest[playerId=b923962e-c159-406e-bf2d-fa2c1a73b2bb, nickname=Guest_b923962e, color=PURPLE]]
+2025-10-21T11:56:32.726-05:00  INFO 3256 --- [Color-craze] [io-8080-exec-10] com.Color_craze.aop.LoggingAspect        : <== Exiting method [GameController.join(..)] with result: <200 OK OK,[]>. Execution time: 200ms
+[DEBUG] CorrelationId asignado: ae2b7d8c-c382-4f34-aca8-c836a6b9bac2
+[DEBUG] CorrelationId asignado: 17b2e363-945f-4718-a1e7-3afddca67fda
+[DEBUG] CorrelationId asignado: 7513b27f-7cb3-4ab2-bb5f-5ac953d22c8a
+[DEBUG] CorrelationId asignado: 0bf4606f-515d-45c5-a51f-c081dfcb2df0
+[DEBUG] CorrelationId asignado: 2c26d785-7f9b-4b11-b34d-9b0315b897a7
+2025-10-21T11:56:32.811-05:00  INFO 3256 --- [Color-craze] [nio-8080-exec-5] com.Color_craze.aop.LoggingAspect        : ==> Entering method [GameController.getGame(..)] with arguments: [L62BPG]
+[DEBUG] CorrelationId asignado: 691cdd60-29d1-4273-9b2e-eddced4217ea
+2025-10-21T11:56:32.821-05:00  INFO 3256 --- [Color-craze] [nio-8080-exec-2] o.s.w.s.m.SubProtocolWebSocketHandler    : No messages received after 133691 ms. Closing WebSocketServerSockJsSession[id=kb3adho5].
+[DEBUG] CorrelationId asignado: 0ba80f8e-45ff-4c7b-892c-82f9230b9b30
+2025-10-21T11:56:32.908-05:00  INFO 3256 --- [Color-craze] [nio-8080-exec-5] com.Color_craze.aop.LoggingAspect        : <== Exiting method [GameController.getGame(..)] with result: <200 OK OK,GameInfoResponse[code=L62BPG, status=WAITING, joinDeadlineMs=1761065812379, players=[PlayerInfo[playerId=b923962e-c159-406e-bf2d-fa2c1a73b2bb, nickname=Guest_b923962e, color=PURPLE, score=0]]],[]>. Execution time: 95ms
+[DEBUG] CorrelationId asignado: 8612af6d-2907-4441-8d80-46f51ac456a9
+2025-10-21T11:56:32.916-05:00  INFO 3256 --- [Color-craze] [nio-8080-exec-3] com.Color_craze.aop.LoggingAspect        : ==> Entering method [GameController.getGame(..)] with arguments: [L62BPG]
+2025-10-21T11:56:33.009-05:00  INFO 3256 --- [Color-craze] [nio-8080-exec-3] com.Color_craze.aop.LoggingAspect        : <== Exiting method [GameController.getGame(..)] with result: <200 OK OK,GameInfoResponse[code=L62BPG, status=WAITING, joinDeadlineMs=1761065812379, players=[PlayerInfo[playerId=b923962e-c159-406e-bf2d-fa2c1a73b2bb, nickname=Guest_b923962e, color=PURPLE, score=0]]],[]>. Execution time: 92ms
+[DEBUG] CorrelationId asignado: f098421c-ca77-4d14-b235-75c946e3c6f5
+2025-10-21T11:58:28.240-05:00  INFO 3256 --- [Color-craze] [nio-8080-exec-8] com.Color_craze.aop.LoggingAspect        : ==> Entering method [AuthController.guestLogin()] with arguments: []
+2025-10-21T11:58:28.243-05:00  INFO 3256 --- [Color-craze] [nio-8080-exec-8] com.Color_craze.aop.LoggingAspect        : <== Exiting method [AuthController.guestLogin()] with result: <200 OK OK,AuthResponse[token=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJndWVzdF85Y2Q5YzI3MC03MWRhLTRmOTEtODRmMi03OGUwYjE3MTc4MjRAZXhhbXBsZS5jb20iLCJpYXQiOjE3NjEwNjU5MDgsImV4cCI6MTc2MTA2NzcwOH0.vlq1X4G4o8gW91FG9qBPjjWkRv4uhgcXbxI-eyfqhCw, refreshToken=eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiVVNFUiIsInN1YiI6Imd1ZXN0XzljZDljMjcwLTcxZGEtNGY5MS04NGYyLTc4ZTBiMTcxNzgyNEBleGFtcGxlLmNvbSIsImlhdCI6MTc2MTA2NTkwOCwiZXhwIjoxNzYxMDY5NTA4fQ.wXk5rehzgYaaAfz2wMilM8GEyOVJrhdxf37m9bx5GyY, userData=UserDetailsResponse[id=9cd9c270-71da-4f91-84f2-78e0b1717824, email=guest_9cd9c270-71da-4f91-84f2-78e0b1717824@example.com, nickname=Guest_9cd9c270]],[]>. Execution time: 2ms
+[DEBUG] CorrelationId asignado: 26dd0361-6467-4330-8e28-8e4801b48d15
+2025-10-21T11:58:33.039-05:00  INFO 3256 --- [Color-craze] [nio-8080-exec-1] com.Color_craze.aop.LoggingAspect        : ==> Entering method [GameController.createGame()] with arguments: []
+2025-10-21T11:58:33.331-05:00  INFO 3256 --- [Color-craze] [nio-8080-exec-1] com.Color_craze.aop.LoggingAspect        : <== Exiting method [GameController.createGame()] with result: <200 OK OK,CreateGameResponse[code=4XT85A],[]>. Execution time: 291ms
+[DEBUG] CorrelationId asignado: 03fd1def-7945-48ec-a3d3-aefb695a1403
+[DEBUG] CorrelationId asignado: 7103427e-6668-42f3-b40c-beac2fda1520
+2025-10-21T11:58:33.361-05:00  INFO 3256 --- [Color-craze] [io-8080-exec-10] com.Color_craze.aop.LoggingAspect        : ==> Entering method [GameController.join(..)] with arguments: [4XT85A, JoinGameRequest[playerId=9cd9c270-71da-4f91-84f2-78e0b1717824, nickname=Guest_9cd9c270, color=PINK]]
+2025-10-21T11:58:33.544-05:00  INFO 3256 --- [Color-craze] [io-8080-exec-10] com.Color_craze.aop.LoggingAspect        : <== Exiting method [GameController.join(..)] with result: <200 OK OK,[]>. Execution time: 182ms
+[DEBUG] CorrelationId asignado: 24e9892e-d381-4903-92a4-b5af893ff6f2
+[DEBUG] CorrelationId asignado: 740cb88c-e146-42f4-83eb-831577fce570
+[DEBUG] CorrelationId asignado: 584f2495-79e4-41d3-bfb3-8545cd5faa11
+[DEBUG] CorrelationId asignado: a1edc5f2-f3a1-4511-8742-22d93fae593b
+2025-10-21T11:58:33.640-05:00  INFO 3256 --- [Color-craze] [nio-8080-exec-4] com.Color_craze.aop.LoggingAspect        : ==> Entering method [GameController.getGame(..)] with arguments: [4XT85A]
+[DEBUG] CorrelationId asignado: 5e5c120d-f2d0-41eb-9e2c-8ad25ba0c80e
+[DEBUG] CorrelationId asignado: 90917d8d-3994-43ae-9463-22e3cb10974d
+2025-10-21T11:58:33.654-05:00  INFO 3256 --- [Color-craze] [nio-8080-exec-7] o.s.w.s.m.SubProtocolWebSocketHandler    : No messages received after 120829 ms. Closing WebSocketServerSockJsSession[id=vlbvvivp].
+[DEBUG] CorrelationId asignado: 6f12dfad-0a75-46ba-bf93-25cf2038443c
+2025-10-21T11:58:33.739-05:00  INFO 3256 --- [Color-craze] [nio-8080-exec-4] com.Color_craze.aop.LoggingAspect        : <== Exiting method [GameController.getGame(..)] with result: <200 OK OK,GameInfoResponse[code=4XT85A, status=WAITING, joinDeadlineMs=1761065933131, players=[PlayerInfo[playerId=9cd9c270-71da-4f91-84f2-78e0b1717824, nickname=Guest_9cd9c270, color=PINK, score=0]]],[]>. Execution time: 98ms
+[DEBUG] CorrelationId asignado: ed9a05f2-6e3f-432e-b1d0-73146ebec7b0
+2025-10-21T11:58:33.748-05:00  INFO 3256 --- [Color-craze] [nio-8080-exec-5] com.Color_craze.aop.LoggingAspect        : ==> Entering method [GameController.getGame(..)] with arguments: [4XT85A]
+2025-10-21T11:58:33.845-05:00  INFO 3256 --- [Color-craze] [nio-8080-exec-5] com.Color_craze.aop.LoggingAspect        : <== Exiting method [GameController.getGame(..)] with result: <200 OK OK,GameInfoResponse[code=4XT85A, status=WAITING, joinDeadlineMs=1761065933131, players=[PlayerInfo[playerId=9cd9c270-71da-4f91-84f2-78e0b1717824, nickname=Guest_9cd9c270, color=PINK, score=0]]],[]>. Execution time: 96ms

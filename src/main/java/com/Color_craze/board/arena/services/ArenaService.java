@@ -1,0 +1,246 @@
+package com.Color_craze.board.arena.services;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.stereotype.Service;
+
+import com.Color_craze.board.arena.dtos.ArenaFrame;
+import com.Color_craze.board.arena.dtos.ArenaInput;
+import com.Color_craze.board.arena.models.ArenaState;
+import com.Color_craze.board.arena.models.Platform2D;
+import com.Color_craze.board.arena.models.Player2D;
+import com.Color_craze.board.models.GameSession.PlayerEntry;
+// import com.Color_craze.utils.enums.ColorStatus;
+
+import lombok.RequiredArgsConstructor;
+
+@Service
+@RequiredArgsConstructor
+public class ArenaService {
+    private final SimpMessagingTemplate messagingTemplate;
+    private final Map<String, ArenaState> arenas = new ConcurrentHashMap<>();
+    private final Map<String, InputState> inputs = new ConcurrentHashMap<>(); // key: code|playerId
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
+
+    private static class InputState { volatile boolean left, right, jump; }
+
+    public ArenaState initGame(String code, List<PlayerEntry> players){
+        ArenaState st = new ArenaState(980, 540); // a bit wider to match the vibe of the reference
+    // Ground (normalize to ~5 px per cell like other platforms)
+    // st.width ~ 980 => 196 cells keeps ~5 px per cell for consistent scoring across platforms
+    addPlatform(st, 0, 510, st.width, 30, 196);
+
+        // Lower side ledges (approximate angled ramps with rectangles)
+        addPlatform(st, 140, 440, 180, 22, 36); // left lower
+        addPlatform(st, st.width - 140 - 180, 440, 180, 22, 36); // right lower
+
+    // Mid center platform (restored)
+    addPlatform(st, (st.width-320)/2, 360, 320, 24, 64); // main mid
+
+        // Upper side ledges
+        addPlatform(st, 120, 250, 200, 22, 40); // left upper
+        addPlatform(st, st.width - 120 - 200, 250, 200, 22, 40); // right upper
+
+        // Small top center platform (requested)
+        addPlatform(st, (st.width-160)/2, 160, 160, 20, 32); // top center small
+
+    // Removed narrow mid connectors to open space
+
+        // Spawn players on upper side ledges; distribute if more players
+        double[][] spawnSpots = new double[][]{
+            {140+20, 250-32},                          // left upper ledge
+            {st.width - 120 - 200 + 200 - 44, 250-32}, // right upper ledge
+            {(st.width-320)/2 + 10, 360-32},           // mid
+            {(st.width-320)/2 + 320 - 34, 360-32}      // mid right edge
+        };
+        for (int i=0;i<players.size();i++){
+            var p = players.get(i);
+            double sx = spawnSpots[Math.min(i, spawnSpots.length-1)][0];
+            double sy = spawnSpots[Math.min(i, spawnSpots.length-1)][1];
+            Player2D pl = new Player2D(p.playerId, sx, sy, p.color);
+            st.players.put(p.playerId, pl);
+        }
+    arenas.put(code, st);
+    try { System.out.println("[Arena] platforms=" + st.platforms.size()); } catch (Exception ignore) {}
+        // start physics loop (120 Hz/8.3ms) for smoother feel; broadcast at 20 Hz
+        scheduler.scheduleAtFixedRate(() -> tick(code), 0, 8, TimeUnit.MILLISECONDS);
+        scheduler.scheduleAtFixedRate(() -> broadcast(code), 0, 50, TimeUnit.MILLISECONDS);
+        return st;
+    }
+
+    private void addPlatform(ArenaState st, double x, double y, double w, double h, int cells){
+        int idx = st.platforms.size();
+        st.platforms.add(new Platform2D(x,y,w,h,cells));
+        st.ensurePaintArray(idx, cells);
+    }
+
+    public void stopGame(String code){
+        arenas.remove(code);
+        // inputs map may retain entries, but harmless; could be cleaned by prefix
+    }
+
+    public ArenaState getState(String code){
+        return arenas.get(code);
+    }
+
+    public void updateInput(ArenaInput input){
+        if (input == null || input.code() == null || input.playerId() == null) return;
+        String key = input.code()+"|"+input.playerId();
+        InputState st = inputs.computeIfAbsent(key, k -> new InputState());
+        st.left = input.left();
+        st.right = input.right();
+        if (input.jump()) st.jump = true; // edge-trigger consumption in tick
+    }
+
+    private void tick(String code){
+        ArenaState st = arenas.get(code);
+        if (st == null) return;
+    final double dt = 0.008; // ~120 Hz
+    final double gravity = 2400.0;
+    final double maxSpeed = 300.0;
+    final double accel = 3200.0;
+    final double jumpVy = -820.0;
+    List<Player2D> plist = new ArrayList<>(st.players.values());
+    final long nowMs = System.currentTimeMillis();
+    final long awardIntervalMs = 150; // ~6-7 points per second maximum
+        for (Player2D p : plist){
+            InputState in = inputs.get(code+"|"+p.playerId);
+            double ax = 0;
+            if (in != null){
+                if (in.left && !in.right) ax = -accel;
+                else if (in.right && !in.left) ax = accel;
+                if (in.jump && p.onGround){
+                    p.vy = jumpVy;
+                }
+                in.jump = false; // consume
+            }
+            // integrate
+            p.vx += ax * dt;
+            // clamp vx with friction if no input
+            if (ax == 0){
+                p.vx *= 0.90;
+                if (Math.abs(p.vx) < 10) p.vx = 0;
+            }
+            if (p.vx > maxSpeed) p.vx = maxSpeed;
+            if (p.vx < -maxSpeed) p.vx = -maxSpeed;
+
+            p.vy += gravity * dt;
+
+            // horizontal move and collide
+            double newX = p.x + p.vx * dt;
+            double newY = p.y;
+            // collide sides
+            for (int i=0;i<st.platforms.size();i++){
+                Platform2D pl = st.platforms.get(i);
+                if (pl.intersects(newX, newY, Player2D.WIDTH, Player2D.HEIGHT)){
+                    if (p.vx > 0) newX = pl.x() - Player2D.WIDTH; else if (p.vx < 0) newX = pl.x() + pl.width();
+                    p.vx = 0;
+                }
+            }
+            p.x = clamp(newX, 0, st.width - Player2D.WIDTH);
+
+            // vertical move and collide
+            newY = p.y + p.vy * dt;
+            Platform2D groundPl = null;
+            for (int i=0;i<st.platforms.size();i++){
+                Platform2D pl = st.platforms.get(i);
+                if (pl.intersects(p.x, newY, Player2D.WIDTH, Player2D.HEIGHT)){
+                    if (p.vy > 0){ // falling onto top
+                        newY = pl.y() - Player2D.HEIGHT;
+                        groundPl = pl;
+                    } else if (p.vy < 0){ // hitting bottom
+                        newY = pl.y() + pl.height();
+                    }
+                    p.vy = 0;
+                }
+            }
+            p.y = clamp(newY, 0, st.height - Player2D.HEIGHT);
+            // Determine if the player is standing on a platform top this frame (even without collision)
+            Platform2D underTouch = groundPl;
+            if (underTouch == null){
+                for (int i=0;i<st.platforms.size();i++){
+                    Platform2D pl = st.platforms.get(i);
+                    boolean horizontallyOver = (p.x + Player2D.WIDTH) > pl.x() && p.x < (pl.x() + pl.width());
+                    if (horizontallyOver && Math.abs((p.y + Player2D.HEIGHT) - pl.y()) <= 3.0){
+                        underTouch = pl;
+                        break;
+                    }
+                }
+            }
+            boolean onFloor = p.y >= st.height - Player2D.HEIGHT - 0.5;
+            p.onGround = (underTouch != null) || onFloor;
+
+            // painting if on ground (paint all cells under player's footprint width)
+            if (p.onGround){
+                Platform2D under = underTouch;
+                if (under != null){
+                    int idx = st.platforms.indexOf(under);
+                    st.ensurePaintArray(idx, under.cells());
+                    String[] arr = st.paint.get(idx);
+                    double cellW = under.width() / under.cells();
+                    double leftRel = (p.x - under.x());
+                    double rightRel = (p.x + Player2D.WIDTH - under.x());
+                    int cStart = (int)Math.floor(leftRel / cellW);
+                    int cEnd = (int)Math.floor(rightRel / cellW);
+                    if (cStart < 0) cStart = 0;
+                    if (cEnd >= under.cells()) cEnd = under.cells()-1;
+                    boolean awarded = false;
+                    boolean decremented = false;
+                    boolean canAward = (nowMs - p.lastAwardMs) >= awardIntervalMs;
+                    for (int ci = cStart; ci <= cEnd; ci++){
+                        String prev = arr[ci];
+                        String newCol = p.color.name();
+                        if (newCol.equals(prev)) continue; // no-op on same color
+                        // Award paint score only once per unique cell for this player
+                        long key = com.Color_craze.board.arena.models.ArenaState.cellKey(idx, ci);
+                        java.util.Set<Long> credited = st.creditedByPlayer.computeIfAbsent(p.playerId, k -> new java.util.HashSet<>());
+                        if (canAward && !credited.contains(key) && !awarded){
+                            p.score += 1;
+                            credited.add(key);
+                            p.lastAwardMs = nowMs;
+                            awarded = true; // limit to +1 per tick even if footprint spans multiple new cells
+                        }
+                        // If there was a previous owner (other color), decrement their score and remove their credit
+                        if (!decremented && prev != null && !prev.equals(newCol)){
+                            Player2D prevOwner = null;
+                            for (Player2D tp : st.players.values()){
+                                if (tp.color.name().equals(prev)) { prevOwner = tp; break; }
+                            }
+                            if (prevOwner != null && prevOwner.score > 0){
+                                prevOwner.score -= 1;
+                                java.util.Set<Long> prevSet = st.creditedByPlayer.get(prevOwner.playerId);
+                                if (prevSet != null) prevSet.remove(key);
+                                decremented = true; // limit to -1 per tick to balance the +1 cap
+                            }
+                        }
+                        // Finally, paint the cell
+                        arr[ci] = newCol;
+                        // don't break; paint entire footprint so the stripe isn't too thin
+                    }
+                }
+            }
+        }
+    }
+
+    private double clamp(double v, double lo, double hi){
+        return Math.max(lo, Math.min(hi, v));
+    }
+
+    private void broadcast(String code){
+        ArenaState st = arenas.get(code);
+        if (st == null) return;
+        var players = st.players.values().stream().map(p -> new ArenaFrame.PlayerPose(p.playerId, p.x, p.y, p.onGround)).collect(Collectors.toList());
+        java.util.Map<String, Integer> scores = new java.util.HashMap<>();
+        for (var e : st.players.entrySet()) scores.put(e.getKey(), e.getValue().score);
+        var frame = new ArenaFrame(code, players, st.paint, scores);
+        messagingTemplate.convertAndSend(String.format("/topic/board/%s/arena", code), frame);
+    }
+}

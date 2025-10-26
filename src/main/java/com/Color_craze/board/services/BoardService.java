@@ -71,4 +71,8 @@ public class BoardService {
             b.addPlayer(p);
         }
     }
+
+    public void resetBoard(String gameCode) {
+        boards.put(gameCode, new Board());
+    }
 }

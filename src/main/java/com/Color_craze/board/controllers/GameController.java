@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.Color_craze.board.dtos.CreateGameResponse;
 import com.Color_craze.board.dtos.GameInfoResponse;
 import com.Color_craze.board.dtos.JoinGameRequest;
+import com.Color_craze.board.dtos.UpdatePlayerRequest;
 import com.Color_craze.board.services.GameService;
 
 import lombok.RequiredArgsConstructor;
@@ -39,6 +40,18 @@ public class GameController {
     @PostMapping("/{code}/join")
     public ResponseEntity<Void> join(@PathVariable String code, @RequestBody JoinGameRequest req) {
         gameService.joinGame(code, req);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{code}/restart")
+    public ResponseEntity<Void> restart(@PathVariable String code) {
+        gameService.restartGame(code);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{code}/player")
+    public ResponseEntity<Void> updatePlayer(@PathVariable String code, @RequestBody UpdatePlayerRequest req) {
+        gameService.updatePlayer(code, req);
         return ResponseEntity.ok().build();
     }
 }

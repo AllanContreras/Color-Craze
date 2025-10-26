@@ -19,6 +19,8 @@ public class Board {
 
     private final Box[][] grid;
     private final Map<UUID, Player> players;
+    // Track which cells each player has been credited for painting (unique count)
+    private final Map<UUID, java.util.Set<Long>> paintedByPlayer = new HashMap<>();
 
     private final Object gridLock = new Object();
     private final List<UUID> lockQueue = new ArrayList<>();
@@ -68,12 +70,13 @@ public class Board {
         }
 
         if (newRow < 0 || newRow >= ROWS || newCol < 0 || newCol >= COLS) {
-            return new MoveResult(currentRow, currentCol, List.of(), List.of(), false);
+            return new MoveResult(playerId, currentRow, currentCol, List.of(), List.of(), false);
         }
 
         Box destination = grid[newRow][newCol];
-        if (destination instanceof Platform || destination instanceof Player) {
-            return new MoveResult(currentRow, currentCol, List.of(), List.of(), false);
+        // Permitir moverse sobre plataformas pintadas; solo bloquear si hay otro jugador
+        if (destination instanceof Player) {
+            return new MoveResult(playerId, currentRow, currentCol, List.of(), List.of(), false);
         }
 
         synchronized (getGridLock(playerId)) {
@@ -82,19 +85,27 @@ public class Board {
                     getGridLock(playerId).wait();
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
-                    return new MoveResult(currentRow, currentCol, List.of(), List.of(), false);
+                    return new MoveResult(playerId, currentRow, currentCol, List.of(), List.of(), false);
                 }
             }
 
             try {
-                grid[currentRow][currentCol] = new Box(ColorStatus.WHITE);
+                // Dejar rastro pintando la casilla anterior como plataforma del color del jugador
+                List<PlatformUpdate> updatedPlatforms = new ArrayList<>();
+                List<PlayerUpdate> affectedPlayers = new ArrayList<>();
+                // La casilla anterior pasa a ser plataforma. Iníciala como WHITE
+                // para que updatePlatformAndScores cuente el cambio de color y sume puntaje.
+                Platform prevPlatform = new Platform(ColorStatus.WHITE);
+                grid[currentRow][currentCol] = prevPlatform;
+                // actualizar puntajes por pintar la casilla anterior y registrar update visual
+                updatePlatformAndScores(prevPlatform, player.getColor(), currentRow, currentCol, affectedPlayers);
+                updatedPlatforms.add(new PlatformUpdate(currentRow, currentCol, player.getColor()));
                 player.setRow(newRow);
                 player.setCol(newCol);
                 grid[newRow][newCol] = player;
 
-                List<PlayerUpdate> affectedPlayers = new ArrayList<>();
-                List<PlatformUpdate> updatedPlatforms = updateAdjacentPlatforms(newRow, newCol, player.getColor(), affectedPlayers);
-                return new MoveResult(newRow, newCol, updatedPlatforms, affectedPlayers, true);
+                // Solo pintar un cuadro por movimiento (la casilla anterior)
+                return new MoveResult(playerId, newRow, newCol, updatedPlatforms, affectedPlayers, true);
             } finally {
                 releaseLock(playerId);
                 getGridLock(playerId).notifyAll();
@@ -117,7 +128,13 @@ public class Board {
             if (r >= 0 && r < ROWS && c >= 0 && c < COLS) {
                 Box box = grid[r][c];
                 if (box instanceof Platform platform) {
-                    updatePlatformAndScores(platform, playerColor, affectedPlayers);
+                    updatePlatformAndScores(platform, playerColor, r, c, affectedPlayers);
+                    updates.add(new PlatformUpdate(r, c, playerColor));
+                } else if (!(box instanceof Player)) {
+                    // Si es un Box genérico, conviértelo en Platform y pinta
+                    Platform platform = new Platform(playerColor);
+                    grid[r][c] = platform;
+                    updatePlatformAndScores(platform, playerColor, r, c, affectedPlayers);
                     updates.add(new PlatformUpdate(r, c, playerColor));
                 }
             }
@@ -127,7 +144,7 @@ public class Board {
     }
 
 
-    private void updatePlatformAndScores(Platform platform, ColorStatus newColor, List<PlayerUpdate> affectedPlayers) {
+    private void updatePlatformAndScores(Platform platform, ColorStatus newColor, int row, int col, List<PlayerUpdate> affectedPlayers) {
         ColorStatus previousColor = platform.getColor();
 
         if (previousColor == newColor) {
@@ -136,8 +153,14 @@ public class Board {
 
         Player paintingPlayer = findPlayerByColor(newColor);
         if (paintingPlayer != null) {
-            paintingPlayer.setScore(paintingPlayer.getScore() + 1);
-            affectedPlayers.add(new PlayerUpdate(paintingPlayer.getId(), paintingPlayer.getColor(), paintingPlayer.getScore()));
+            // Credit score only once per unique cell for this player
+            long key = cellKey(row, col);
+            java.util.Set<Long> credited = paintedByPlayer.computeIfAbsent(paintingPlayer.getId(), k -> new java.util.HashSet<>());
+            if (!credited.contains(key)) {
+                paintingPlayer.setScore(paintingPlayer.getScore() + 1);
+                credited.add(key);
+                affectedPlayers.add(new PlayerUpdate(paintingPlayer.getId(), paintingPlayer.getColor(), paintingPlayer.getScore()));
+            }
         }
 
         if (previousColor != ColorStatus.WHITE && previousColor != newColor) {
@@ -145,6 +168,9 @@ public class Board {
             if (previousPlayer != null && previousPlayer.getScore() > 0) {
                 previousPlayer.setScore(previousPlayer.getScore() - 1);
                 affectedPlayers.add(new PlayerUpdate(previousPlayer.getId(), previousPlayer.getColor(), previousPlayer.getScore()));
+                // Remove credit from the previous player's set for this cell
+                java.util.Set<Long> prevSet = paintedByPlayer.get(previousPlayer.getId());
+                if (prevSet != null) prevSet.remove(cellKey(row, col));
             }
         }
 
@@ -190,6 +216,10 @@ public class Board {
         synchronized (gridLock) {
             lockQueue.remove(playerId);
         }
+    }
+
+    private long cellKey(int r, int c) {
+        return (((long) r) << 32) | (c & 0xffffffffL);
     }
 
 }

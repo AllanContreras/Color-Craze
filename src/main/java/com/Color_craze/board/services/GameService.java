@@ -8,12 +8,12 @@ import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.Color_craze.board.models.GameSession;
-import com.Color_craze.board.services.BoardService;
 import com.Color_craze.board.dtos.Responses.MoveResult;
 import com.Color_craze.utils.enums.PlayerMove;
 import com.Color_craze.board.models.GameSession.PlayerEntry;
@@ -21,6 +21,7 @@ import com.Color_craze.board.repositories.GameRepository;
 import com.Color_craze.board.dtos.CreateGameResponse;
 import com.Color_craze.board.dtos.GameInfoResponse;
 import com.Color_craze.board.dtos.JoinGameRequest;
+import com.Color_craze.board.dtos.UpdatePlayerRequest;
 import com.Color_craze.utils.enums.ColorStatus;
 
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.stream.Collectors;
+import com.Color_craze.board.arena.services.ArenaService;
 
 @Service
 @RequiredArgsConstructor
@@ -38,6 +40,7 @@ public class GameService {
     private final SimpMessagingTemplate messagingTemplate;
     private final Random random = new SecureRandom();
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
+    private final ArenaService arenaService;
 
     private static final String ALPHANUM = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
@@ -46,24 +49,85 @@ public class GameService {
         GameSession gs = new GameSession();
         gs.setCode(code);
         gs.setStatus("WAITING");
-        gs.setCreatedAt(Instant.now());
+        Instant now = Instant.now();
+        gs.setCreatedAt(now);
+    gs.setJoinDeadline(now.plusSeconds(40));
         gameRepository.save(gs);
+        // Publicar estado inicial de WAITING (para countdown en clientes)
+        Map<String, Object> waiting = Map.of(
+            "code", code,
+            "status", "WAITING",
+            "joinDeadlineMs", gs.getJoinDeadline() != null ? gs.getJoinDeadline().toEpochMilli() : null,
+            "players", List.of()
+        );
+        messagingTemplate.convertAndSend(String.format("/topic/board/%s/state", code), waiting);
+        // Programar inicio automático a los 40s
+        scheduler.schedule(() -> {
+            try {
+                // Double-check from DB for current state
+                gameRepository.findByCode(code).ifPresent(current -> {
+                    if ("WAITING".equals(current.getStatus())) {
+                        startGame(current);
+                    }
+                });
+            } catch (Exception ignored) {}
+        }, 40, TimeUnit.SECONDS);
         return new CreateGameResponse(code);
     }
 
     public Optional<GameInfoResponse> getGame(String code) {
-        return gameRepository.findByCode(code).map(gs -> toDto(gs));
+        return gameRepository.findByCode(code).map(gs -> {
+            // Fallback: si la ventana de unión ya expiró y aún está en WAITING, iniciar la partida
+            try {
+                if ("WAITING".equals(gs.getStatus()) && gs.getJoinDeadline() != null && Instant.now().isAfter(gs.getJoinDeadline())) {
+                    startGame(gs);
+                    // recargar para DTO actualizado
+                    gs = gameRepository.findByCode(code).orElse(gs);
+                }
+            } catch (Exception ignored) {}
+            return toDto(gs);
+        });
     }
 
     public GameInfoResponse toDto(GameSession gs) {
         List<GameInfoResponse.PlayerInfo> players = gs.getPlayers().stream()
-            .map(p -> new GameInfoResponse.PlayerInfo(p.playerId, p.nickname, p.color.name(), p.score))
+            .map(p -> new GameInfoResponse.PlayerInfo(p.playerId, p.nickname, p.color.name(), p.avatar, p.score))
             .collect(Collectors.toList());
-        return new GameInfoResponse(gs.getCode(), gs.getStatus(), players);
+        Long joinDeadlineMs = gs.getJoinDeadline() != null ? gs.getJoinDeadline().toEpochMilli() : null;
+        Long startedAtMs = gs.getStartedAt() != null ? gs.getStartedAt().toEpochMilli() : null;
+        Long durationMs = "PLAYING".equals(gs.getStatus()) ? 40000L : null;
+        List<GameInfoResponse.PlayerPos> positions = null;
+        GameInfoResponse.ArenaConfig arenaCfg = null;
+        if ("PLAYING".equals(gs.getStatus())) {
+            var board = boardService.getOrCreateBoard(gs.getCode());
+            positions = board.getPlayers().entrySet().stream()
+                .map(e -> new GameInfoResponse.PlayerPos(
+                    e.getKey().toString(),
+                    e.getValue().getRow(),
+                    e.getValue().getCol(),
+                    e.getValue().getColor().name()
+                ))
+                .collect(Collectors.toList());
+            // Try include arena config if available
+            try {
+                var st = arenaService.getState(gs.getCode());
+                if (st != null) {
+                    var plats = st.platforms.stream()
+                        .map(pl -> new GameInfoResponse.ArenaPlatform(pl.x(), pl.y(), pl.width(), pl.height(), pl.cells()))
+                        .collect(Collectors.toList());
+                    arenaCfg = new GameInfoResponse.ArenaConfig(st.width, st.height, plats);
+                }
+            } catch (Exception ignored) {}
+        }
+        return new GameInfoResponse(gs.getCode(), gs.getStatus(), joinDeadlineMs, players, startedAtMs, durationMs, positions, arenaCfg);
     }
 
-    public MoveResult handlePlayerMove(String code, String playerId, com.Color_craze.utils.enums.PlayerMove direction) {
+    public MoveResult handlePlayerMove(String code, String playerId, PlayerMove direction) {
         GameSession gs = gameRepository.findByCode(code).orElseThrow(() -> new IllegalArgumentException("Game not found"));
+        if (!"PLAYING".equals(gs.getStatus())) {
+            // Ignore moves unless the game is in PLAYING
+            return null;
+        }
         // validate player exists in session
         GameSession.PlayerEntry pe = gs.getPlayers().stream().filter(p -> p.playerId.equals(playerId)).findFirst().orElseThrow(() -> new IllegalArgumentException("Player not in game"));
 
@@ -86,13 +150,35 @@ public class GameService {
     }
 
     public void joinGame(String code, JoinGameRequest req) {
-        GameSession gs = gameRepository.findByCode(code).orElseThrow(() -> new IllegalArgumentException("Game not found"));
-        if (gs.getPlayers().size() >= 4) throw new IllegalStateException("Room full");
-        // assign color
+        GameSession gs = gameRepository.findByCode(code).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found"));
+        if (gs.getPlayers().size() >= 4) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Room full");
+
+        // Color is always auto-assigned randomly from available player colors
         ColorStatus color = pickColor(gs);
-        PlayerEntry pe = new PlayerEntry(req.playerId(), req.nickname(), color);
+
+    PlayerEntry pe = new PlayerEntry(req.playerId(), req.nickname(), color, req.avatar());
+        try { System.out.println("[Join] Assigned color=" + color + " to player=" + req.playerId()); } catch (Exception ignored) {}
         gs.getPlayers().add(pe);
         gameRepository.save(gs);
+        // Si ya expiró la ventana de unión, iniciar inmediatamente
+        if (gs.getJoinDeadline() != null && Instant.now().isAfter(gs.getJoinDeadline()) && "WAITING".equals(gs.getStatus())) {
+            startGame(gs);
+            return;
+        }
+        // Notificar estado de WAITING actualizado (colores tomados, countdown)
+        Map<String, Object> waiting = Map.of(
+            "code", gs.getCode(),
+            "status", "WAITING",
+            "joinDeadlineMs", gs.getJoinDeadline() != null ? gs.getJoinDeadline().toEpochMilli() : null,
+            "players", gs.getPlayers().stream().map(p -> Map.of(
+                "playerId", p.playerId,
+                "nickname", p.nickname,
+                "color", p.color.name(),
+                "avatar", p.avatar,
+                "score", p.score
+            )).collect(Collectors.toList())
+        );
+        messagingTemplate.convertAndSend(String.format("/topic/board/%s/state", gs.getCode()), waiting);
         // auto-start if 2-4 players
         if (gs.getPlayers().size() >= 2) {
             startGame(gs);
@@ -100,24 +186,30 @@ public class GameService {
     }
 
     private ColorStatus pickColor(GameSession gs) {
-        for (ColorStatus c : ColorStatus.values()) {
+        // Allowed player colors (skip WHITE)
+        ColorStatus[] choices = new ColorStatus[]{ColorStatus.YELLOW, ColorStatus.PINK, ColorStatus.PURPLE, ColorStatus.GREEN};
+        java.util.List<ColorStatus> available = new java.util.ArrayList<>();
+        for (ColorStatus c : choices) {
             boolean used = gs.getPlayers().stream().anyMatch(p -> p.color == c);
-            if (!used) return c;
+            if (!used) available.add(c);
         }
-        // fallback
-        return ColorStatus.PINK;
+        if (!available.isEmpty()) {
+            return available.get(random.nextInt(available.size()));
+        }
+        // fallback: all taken (shouldn't happen with max 4 players)
+        return choices[random.nextInt(choices.length)];
     }
+
+    // kept for potential future validations
+    // private boolean isAllowedPlayerColor(ColorStatus c) {
+    //     return c == ColorStatus.YELLOW || c == ColorStatus.PINK || c == ColorStatus.PURPLE || c == ColorStatus.GREEN;
+    // }
 
     private void startGame(GameSession gs) {
         if ("PLAYING".equals(gs.getStatus())) return;
-        gs.setStatus("PLAYING");
-        gs.setStartedAt(Instant.now());
-        gameRepository.save(gs);
-
-        // ensure board exists and players are present
+        // ensure board exists and players are present BEFORE flipping status to avoid race with GET
         String code = gs.getCode();
         boardService.getOrCreateBoard(code);
-        // apply saved platform states
         if (gs.getPlatforms() != null && !gs.getPlatforms().isEmpty()) {
             boardService.applyPlatformStates(code, gs.getPlatforms());
         }
@@ -125,27 +217,110 @@ public class GameService {
             boardService.ensurePlayerOnBoard(code, p.playerId, p.color);
         }
 
-        // publish initial state to room
+        // Now flip status to PLAYING and set start time, then persist
+        gs.setStatus("PLAYING");
+        gs.setStartedAt(Instant.now());
+        gameRepository.save(gs);
+
+        // publish initial state with positions
+        var board = boardService.getOrCreateBoard(code);
+        var positions = board.getPlayers().entrySet().stream()
+            .map(e -> Map.of(
+                "playerId", e.getKey().toString(),
+                "row", e.getValue().getRow(),
+                "col", e.getValue().getCol(),
+                "color", e.getValue().getColor().name()
+            ))
+            .collect(Collectors.toList());
+
         Map<String, Object> state = Map.of(
             "code", code,
             "status", "PLAYING",
+            "startTimestamp", gs.getStartedAt() != null ? gs.getStartedAt().toEpochMilli() : Instant.now().toEpochMilli(),
+            "duration", 40000,
+            "playerPositions", positions,
             "players", gs.getPlayers().stream().map(p -> Map.of(
                 "playerId", p.playerId,
                 "nickname", p.nickname,
                 "color", p.color.name(),
+                "avatar", p.avatar,
                 "score", p.score
             )).collect(Collectors.toList())
         );
-        messagingTemplate.convertAndSend(String.format("/topic/board/%s/state", code), state);
+        // Initialize 2D arena and append its config to the state
+        try {
+            var st = arenaService.initGame(code, gs.getPlayers());
+            Map<String, Object> arena = Map.of(
+                "width", st.width,
+                "height", st.height,
+                "platforms", st.platforms.stream().map(pl -> Map.of(
+                    "x", pl.x(), "y", pl.y(), "width", pl.width(), "height", pl.height(), "cells", pl.cells()
+                )).collect(Collectors.toList())
+            );
+            java.util.HashMap<String, Object> mutable = new java.util.HashMap<>(state);
+            mutable.put("arena", arena);
+            messagingTemplate.convertAndSend(String.format("/topic/board/%s/state", code), mutable);
+        } catch (Exception ex) {
+            messagingTemplate.convertAndSend(String.format("/topic/board/%s/state", code), state);
+        }
 
-        // schedule end in 45 seconds
-        scheduler.schedule(() -> endGame(gs.getCode()), 45, TimeUnit.SECONDS);
+        // schedule end in 40 seconds
+        scheduler.schedule(() -> endGame(gs.getCode()), 40, TimeUnit.SECONDS);
+    }
+
+    public void updatePlayer(String code, UpdatePlayerRequest req) {
+        GameSession gs = gameRepository.findByCode(code).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found"));
+        if (!"WAITING".equals(gs.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "No se puede cambiar color/personaje durante la partida");
+        }
+        if (req.playerId() == null || req.playerId().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "playerId requerido");
+        }
+        GameSession.PlayerEntry pe = gs.getPlayers().stream().filter(p -> p.playerId.equals(req.playerId())).findFirst()
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Jugador no está en la sala"));
+
+        // Disallow manual color changes; colors are assigned automatically
+        if (req.color() != null && !req.color().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "El color se asigna automáticamente y no se puede cambiar");
+        }
+
+        // Avatar update (optional)
+        if (req.avatar() != null) {
+            pe.avatar = req.avatar();
+        }
+
+        gameRepository.save(gs);
+
+        // Notify WAITING state with updated players
+        Map<String, Object> waiting = Map.of(
+            "code", gs.getCode(),
+            "status", "WAITING",
+            "joinDeadlineMs", gs.getJoinDeadline() != null ? gs.getJoinDeadline().toEpochMilli() : null,
+            "players", gs.getPlayers().stream().map(p -> Map.of(
+                "playerId", p.playerId,
+                "nickname", p.nickname,
+                "color", p.color.name(),
+                "avatar", p.avatar,
+                "score", p.score
+            )).collect(Collectors.toList())
+        );
+        messagingTemplate.convertAndSend(String.format("/topic/board/%s/state", gs.getCode()), waiting);
     }
 
     private void endGame(String code) {
         Optional<GameSession> opt = gameRepository.findByCode(code);
         if (opt.isEmpty()) return;
         GameSession gs = opt.get();
+        // Sync arena scores back to game session before finishing
+        try {
+            var st = arenaService.getState(code);
+            if (st != null && st.players != null) {
+                for (var p : gs.getPlayers()) {
+                    var pl2d = st.players.get(p.playerId);
+                    if (pl2d != null) p.score = pl2d.score;
+                }
+            }
+        } catch (Exception ignored) {}
         gs.setStatus("FINISHED");
         gs.setFinishedAt(Instant.now());
         // calculate results (already in scores) - no-op here
@@ -153,9 +328,53 @@ public class GameService {
         // publish final standings
         var standings = gs.getPlayers().stream()
             .sorted(Comparator.comparingInt(p -> -p.score))
-            .map(p -> Map.of("playerId", p.playerId, "nickname", p.nickname, "score", p.score))
+            .map(p -> Map.of("playerId", p.playerId, "nickname", p.nickname, "avatar", p.avatar, "score", p.score))
             .collect(Collectors.toList());
         messagingTemplate.convertAndSend(String.format("/topic/board/%s/end", code), Map.of("code", code, "standings", standings));
+        try { arenaService.stopGame(code); } catch (Exception ignored) {}
+    }
+
+    public void restartGame(String code) {
+        GameSession gs = gameRepository.findByCode(code).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found"));
+    // Reset state to WAITING with a new 40s join window
+        gs.setStatus("WAITING");
+        gs.setStartedAt(null);
+        gs.setFinishedAt(null);
+    gs.setJoinDeadline(Instant.now().plusSeconds(40));
+        // Reset scores
+        for (var p : gs.getPlayers()) p.score = 0;
+        // Clear saved platforms snapshot
+        gs.getPlatforms().clear();
+        gameRepository.save(gs);
+
+        // Reset the in-memory board
+        boardService.resetBoard(code);
+
+        // Broadcast WAITING state with new countdown
+        Map<String, Object> waiting = Map.of(
+            "code", gs.getCode(),
+            "status", "WAITING",
+            "joinDeadlineMs", gs.getJoinDeadline() != null ? gs.getJoinDeadline().toEpochMilli() : null,
+            "players", gs.getPlayers().stream().map(p -> Map.of(
+                "playerId", p.playerId,
+                "nickname", p.nickname,
+                "color", p.color.name(),
+                "avatar", p.avatar,
+                "score", p.score
+            )).collect(Collectors.toList())
+        );
+        messagingTemplate.convertAndSend(String.format("/topic/board/%s/state", gs.getCode()), waiting);
+
+        // Schedule auto-start in 40s
+        scheduler.schedule(() -> {
+            try {
+                gameRepository.findByCode(code).ifPresent(current -> {
+                    if ("WAITING".equals(current.getStatus())) {
+                        startGame(current);
+                    }
+                });
+            } catch (Exception ignored) {}
+        }, 40, TimeUnit.SECONDS);
     }
 
     private String generateUniqueCode() {
