@@ -2,5 +2,8 @@
 .git/
 .env
 target/classes/
-.mvn/
+.mvn/jvm.config
+.mvn/maven.config
+.mvn/settings.xml
+.mvn/toolchains.xml
 *.log
