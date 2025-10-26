@@ -47,6 +47,22 @@
         <maven.compiler.debuglevel>lines,vars,source</maven.compiler.debuglevel>
         <maven.compiler.fork>true</maven.compiler.fork>
         
+        <!-- NUCLEAR Java 17 enforcement - override EVERYTHING -->
+        <java.specification.version>17</java.specification.version>
+        <java.runtime.version>17</java.runtime.version>
+        <java.vm.specification.version>17</java.vm.specification.version>
+        <JAVA_VERSION>17</JAVA_VERSION>
+        <JDK_VERSION>17</JDK_VERSION>
+        <JAVA_HOME>/usr/lib/jvm/java-17-openjdk</JAVA_HOME>
+        
+        <!-- Force Maven to ignore any inherited settings -->
+        <maven.compiler.executable>javac</maven.compiler.executable>
+        <maven.compiler.forceJavacCompilerUse>true</maven.compiler.forceJavacCompilerUse>
+        <maven.compiler.failOnError>true</maven.compiler.failOnError>
+        <maven.compiler.testSource>17</maven.compiler.testSource>
+        <maven.compiler.testTarget>17</maven.compiler.testTarget>
+        <maven.compiler.testRelease>17</maven.compiler.testRelease>
+        
         <!-- Override Spring Boot defaults EXPLICITLY -->
         <spring-boot.version>3.5.5</spring-boot.version>
         <spring-framework.version>6.2.10</spring-framework.version>

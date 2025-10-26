@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 
+                              http://maven.apache.org/xsd/settings-1.0.0.xsd">
+    
+    <profiles>
+        <profile>
+            <id>force-java-17</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <java.version>17</java.version>
+                <maven.compiler.source>17</maven.compiler.source>
+                <maven.compiler.target>17</maven.compiler.target>
+                <maven.compiler.release>17</maven.compiler.release>
+                <maven.compiler.compilerVersion>17</maven.compiler.compilerVersion>
+                <maven.compiler.executable>javac</maven.compiler.executable>
+                <maven.compiler.fork>true</maven.compiler.fork>
+                <maven.compiler.forceJavacCompilerUse>true</maven.compiler.forceJavacCompilerUse>
+                <maven.compiler.verbose>true</maven.compiler.verbose>
+                <maven.compiler.failOnError>true</maven.compiler.failOnError>
+                <java.specification.version>17</java.specification.version>
+                <java.runtime.version>17</java.runtime.version>
+                <java.vm.specification.version>17</java.vm.specification.version>
+            </properties>
+        </profile>
+    </profiles>
+    
+    <activeProfiles>
+        <activeProfile>force-java-17</activeProfile>
+    </activeProfiles>
+</settings>
