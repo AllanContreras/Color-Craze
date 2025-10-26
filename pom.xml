@@ -35,6 +35,18 @@
         <maven.compiler.version>3.11.0</maven.compiler.version>
         <maven.compiler.compilerVersion>17</maven.compiler.compilerVersion>
         
+        <!-- ULTIMATE Java 17 enforcement -->
+        <javac.version>17</javac.version>
+        <jdk.version>17</jdk.version>
+        <maven.compiler.parameters>true</maven.compiler.parameters>
+        <maven.compiler.verbose>true</maven.compiler.verbose>
+        <maven.compiler.showWarnings>true</maven.compiler.showWarnings>
+        <maven.compiler.showDeprecation>true</maven.compiler.showDeprecation>
+        <maven.compiler.optimize>false</maven.compiler.optimize>
+        <maven.compiler.debug>true</maven.compiler.debug>
+        <maven.compiler.debuglevel>lines,vars,source</maven.compiler.debuglevel>
+        <maven.compiler.fork>true</maven.compiler.fork>
+        
         <!-- Override Spring Boot defaults EXPLICITLY -->
         <spring-boot.version>3.5.5</spring-boot.version>
         <spring-framework.version>6.2.10</spring-framework.version>

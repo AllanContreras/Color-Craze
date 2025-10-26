@@ -6,9 +6,11 @@ dependsOn = ["setup"]
 cmds = [
   "export JAVA_HOME=/nix/store/*openjdk17*/lib/openjdk", 
   "export PATH=$JAVA_HOME/bin:$PATH",
+  "export JAVA_VERSION=17",
+  "export JDK_VERSION=17",
   "java -version",
   "mvn -version",
-  "./mvnw -Djava.version=17 -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 -Dmaven.compiler.release=17 -Dmaven.compiler.compilerVersion=17 -DoutputFile=target/mvn-dependency-list.log -B -DskipTests clean dependency:list install"
+  "./mvnw -Djava.version=17 -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 -Dmaven.compiler.release=17 -Dmaven.compiler.compilerVersion=17 -Dmaven.compiler.executable=javac -Dmaven.compiler.fork=true -DoutputFile=target/mvn-dependency-list.log -B -DskipTests clean dependency:list install"
 ]
 
 [phases.setup]
@@ -17,7 +19,9 @@ cmds = ["chmod +x ./mvnw"]
 
 [variables]
 JAVA_VERSION = "17"
-MAVEN_OPTS = "-Djava.version=17 -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 -Dmaven.compiler.release=17 -Dmaven.compiler.compilerVersion=17 -Dfile.encoding=UTF-8"
+JDK_VERSION = "17"
+JAVA_HOME = "/nix/store/*openjdk17*/lib/openjdk"
+MAVEN_OPTS = "-Djava.version=17 -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 -Dmaven.compiler.release=17 -Dmaven.compiler.compilerVersion=17 -Dmaven.compiler.executable=javac -Dmaven.compiler.fork=true -Dfile.encoding=UTF-8"
 
 [start]
 cmd = "java -Djava.version=17 -jar target/Color-craze-0.0.1-SNAPSHOT.jar"
