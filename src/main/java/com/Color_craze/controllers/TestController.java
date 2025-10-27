@@ -38,4 +38,25 @@ public class TestController {
         response.put("cors", "enabled");
         return ResponseEntity.ok(response);
     }
+
+    // Simular endpoints de autenticación para testing
+    @PostMapping("/mock-register")
+    public ResponseEntity<?> mockRegister(@RequestBody Map<String, Object> data) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "Mock registration successful");
+        response.put("user", data.get("username"));
+        response.put("token", "mock-jwt-token-" + System.currentTimeMillis());
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/mock-login")
+    public ResponseEntity<?> mockLogin(@RequestBody Map<String, Object> data) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "Mock login successful");
+        response.put("user", data.get("username"));
+        response.put("token", "mock-jwt-token-" + System.currentTimeMillis());
+        return ResponseEntity.ok(response);
+    }
 }
