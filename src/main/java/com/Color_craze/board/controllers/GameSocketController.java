@@ -7,7 +7,6 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
 import com.Color_craze.board.dtos.Requests.PlayerMoveRoomMessage;
-import com.Color_craze.board.dtos.Responses.MoveResult;
 import com.Color_craze.board.services.GameService;
 
 import lombok.RequiredArgsConstructor;
@@ -22,9 +21,12 @@ public class GameSocketController {
     @MessageMapping("/move")
     public void handlePlayerMove(@Payload PlayerMoveRoomMessage moveMessage) {
         String code = moveMessage.getCode();
-        MoveResult result = gameService.handlePlayerMove(code, moveMessage.getPlayerId(), moveMessage.getDirection());
-        if (result != null && result.success()) {
-            messagingTemplate.convertAndSend(String.format("/topic/board/%s", code), result);
+        Object payload = gameService.handlePlayerMove(code, moveMessage.getPlayerId(), moveMessage.getDirection());
+        if (payload instanceof java.util.Map) {
+            Object success = ((java.util.Map<?,?>)payload).get("success");
+            if (Boolean.TRUE.equals(success)) {
+                messagingTemplate.convertAndSend(String.format("/topic/board/%s", code), payload);
+            }
         }
     }
 }

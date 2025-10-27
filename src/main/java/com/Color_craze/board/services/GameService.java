@@ -126,7 +126,7 @@ public class GameService {
         return new GameInfoResponse(gs.getCode(), gs.getStatus(), joinDeadlineMs, players, startedAtMs, durationMs, positions, arenaCfg);
     }
 
-    public MoveResult handlePlayerMove(String code, String playerId, PlayerMove direction) {
+    public Map<String, Object> handlePlayerMove(String code, String playerId, PlayerMove direction) {
         GameSession gs = gameRepository.findByCode(code).orElseThrow(() -> new IllegalArgumentException("Game not found"));
         if (!"PLAYING".equals(gs.getStatus())) {
             // Ignore moves unless the game is in PLAYING
@@ -139,18 +139,51 @@ public class GameService {
         boardService.ensurePlayerOnBoard(code, playerId, pe.color);
 
         // delegate to board
-    MoveResult result = boardService.movePlayer(code, playerId, direction);
+        MoveResult result = boardService.movePlayer(code, playerId, direction);
 
-        // update session scores from affected players
+        // update session scores from affected players (map by color to original playerId)
         result.affectedPlayers().forEach(up -> {
-            String uid = up.playerId().toString();
-            gs.getPlayers().stream().filter(p -> p.playerId.equals(uid)).findFirst().ifPresent(p -> p.score = up.newScore());
+            gs.getPlayers().stream()
+                .filter(p -> p.color == up.color())
+                .findFirst()
+                .ifPresent(p -> p.score = up.newScore());
         });
     // persist platform state snapshot
     gs.setPlatforms(boardService.exportPlatformStates(code));
     gameRepository.save(gs);
 
-        return result;
+        // Build a client-friendly payload with original playerIds as strings
+        java.util.List<Map<String, Object>> platforms = new java.util.ArrayList<>();
+        for (var pu : result.platforms()){
+            java.util.Map<String, Object> m = new java.util.HashMap<>();
+            m.put("row", pu.row());
+            m.put("col", pu.col());
+            m.put("color", pu.color().name());
+            platforms.add(m);
+        }
+
+        java.util.List<Map<String, Object>> affected = new java.util.ArrayList<>();
+        for (var up : result.affectedPlayers()){
+            String origId = gs.getPlayers().stream()
+                .filter(pp -> pp.color == up.color())
+                .map(pp -> pp.playerId)
+                .findFirst()
+                .orElse(up.playerId().toString());
+            java.util.Map<String, Object> m = new java.util.HashMap<>();
+            m.put("playerId", origId);
+            m.put("color", up.color().name());
+            m.put("newScore", up.newScore());
+            affected.add(m);
+        }
+
+        java.util.Map<String, Object> payload = new java.util.HashMap<>();
+        payload.put("playerId", playerId);
+        payload.put("newRow", result.newRow());
+        payload.put("newCol", result.newCol());
+        payload.put("platforms", platforms);
+        payload.put("affectedPlayers", affected);
+        payload.put("success", result.success());
+        return payload;
     }
 
     public void joinGame(String code, JoinGameRequest req) {
