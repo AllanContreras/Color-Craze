@@ -1,6 +1,4 @@
 package com.Color_craze.configs;
-
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -17,10 +15,10 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
-@ConditionalOnMissingBean(SecurityFilterChain.class)
 public class TestSecurityConfig {
 
     @Bean("testSecurityFilterChain")
+    @org.springframework.core.annotation.Order(1)
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             // Este chain solo aplica a rutas de test/actuator. Evita conflicto con el chain principal.

@@ -30,6 +30,7 @@ public class SecurityConfig {
 
     @Bean
     @ConditionalOnProperty(name = "spring.data.mongodb.uri", matchIfMissing = false)
+    @org.springframework.core.annotation.Order(org.springframework.core.Ordered.LOWEST_PRECEDENCE)
     SecurityFilterChain mongoSecurityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(AbstractHttpConfigurer::disable)
