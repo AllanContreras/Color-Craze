@@ -43,6 +43,7 @@ public class SecurityConfig {
 
     @Bean
     @ConditionalOnProperty(name = "spring.data.mongodb.uri", matchIfMissing = false)
+    @SuppressWarnings("deprecation")
     AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
         authProvider.setUserDetailsService(userDetailsService);
