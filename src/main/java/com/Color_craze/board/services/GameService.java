@@ -193,7 +193,8 @@ public class GameService {
         // Color is always auto-assigned randomly from available player colors
         ColorStatus color = pickColor(gs);
 
-    PlayerEntry pe = new PlayerEntry(req.playerId(), req.nickname(), color, req.avatar());
+        String avatar = sanitizeAvatar(req.avatar());
+        PlayerEntry pe = new PlayerEntry(req.playerId(), req.nickname(), color, avatar);
         try { System.out.println("[Join] Assigned color=" + color + " to player=" + req.playerId()); } catch (Exception ignored) {}
         gs.getPlayers().add(pe);
         gameRepository.save(gs);
@@ -217,6 +218,12 @@ public class GameService {
         );
         messagingTemplate.convertAndSend(String.format("/topic/board/%s/state", gs.getCode()), waiting);
         // No auto-start on player count; countdown/explicit trigger governs start
+    }
+
+    private String sanitizeAvatar(String avatar){
+        if (avatar == null) return "ROBOT";
+        String v = avatar.toUpperCase();
+        return (v.equals("ROBOT") || v.equals("COWBOY") || v.equals("ALIEN") || v.equals("PRINCESS")) ? v : "ROBOT";
     }
 
     private ColorStatus pickColor(GameSession gs) {
@@ -320,7 +327,7 @@ public class GameService {
 
         // Avatar update (optional)
         if (req.avatar() != null) {
-            pe.avatar = req.avatar();
+            pe.avatar = sanitizeAvatar(req.avatar());
         }
 
         gameRepository.save(gs);

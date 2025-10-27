@@ -8,7 +8,7 @@ export default function Lobby(){
   const [code, setCode] = useState('')
   // Color is no longer selectable; it will be auto-assigned by the server
   const [color] = useState('')
-  const [avatar, setAvatar] = useState('CAT')
+  const [avatar, setAvatar] = useState('ROBOT')
   // No color availability tracking needed anymore
   const [usedColors, setUsedColors] = useState([])
   const [playersInRoom, setPlayersInRoom] = useState([])
@@ -36,7 +36,7 @@ export default function Lobby(){
         // If I'm already in the room, reflect my current selection
         const me = players.find(p => p.playerId === playerIdRef.current)
         if (me){
-          if (!avatar) setAvatar(me.avatar || 'CAT')
+          if (!avatar) setAvatar(me.avatar || 'ROBOT')
         }
         const deadline = res.data.joinDeadlineMs
         if (deadline) {
@@ -78,7 +78,7 @@ export default function Lobby(){
             const me = players.find(p => p.playerId === playerIdRef.current)
             if (me){
               // Preselect my current avatar if not chosen yet
-              if (!avatar) setAvatar(me.avatar || 'CAT')
+              if (!avatar) setAvatar(me.avatar || 'ROBOT')
             }
             if (body.joinDeadlineMs){
               const ms = Math.max(0, body.joinDeadlineMs - Date.now())
@@ -136,7 +136,7 @@ export default function Lobby(){
       {/* Color selection removed: colors are assigned automatically by the server */}
       <div style={{marginBottom:12}}>
         <label style={{marginRight:8}}>Personaje:</label>
-        {['CAT','DOG','ROBOT','NINJA','ALIEN'].map(a => (
+        {['ROBOT','COWBOY','ALIEN','PRINCESS'].map(a => (
           <label key={a} style={{marginRight:8}}>
             <input type="radio" name="avatar" value={a} checked={avatar===a} onChange={()=>setAvatar(a)} /> {a}
           </label>
