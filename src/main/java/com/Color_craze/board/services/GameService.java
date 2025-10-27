@@ -42,6 +42,10 @@ public class GameService {
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
     private final ArenaService arenaService;
 
+    // Configurable timings (in seconds)
+    private static final long JOIN_WINDOW_SECONDS = 60; // tiempo para unirse
+    private static final long GAME_DURATION_SECONDS = 60; // duración de la partida
+
     private static final String ALPHANUM = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
     public CreateGameResponse createGame() {
@@ -51,7 +55,7 @@ public class GameService {
         gs.setStatus("WAITING");
         Instant now = Instant.now();
         gs.setCreatedAt(now);
-    gs.setJoinDeadline(now.plusSeconds(40));
+        gs.setJoinDeadline(now.plusSeconds(JOIN_WINDOW_SECONDS));
         gameRepository.save(gs);
         // Publicar estado inicial de WAITING (para countdown en clientes)
         Map<String, Object> waiting = Map.of(
@@ -71,7 +75,7 @@ public class GameService {
                     }
                 });
             } catch (Exception ignored) {}
-        }, 40, TimeUnit.SECONDS);
+        }, JOIN_WINDOW_SECONDS, TimeUnit.SECONDS);
         return new CreateGameResponse(code);
     }
 
@@ -95,7 +99,7 @@ public class GameService {
             .collect(Collectors.toList());
         Long joinDeadlineMs = gs.getJoinDeadline() != null ? gs.getJoinDeadline().toEpochMilli() : null;
         Long startedAtMs = gs.getStartedAt() != null ? gs.getStartedAt().toEpochMilli() : null;
-        Long durationMs = "PLAYING".equals(gs.getStatus()) ? 40000L : null;
+    Long durationMs = "PLAYING".equals(gs.getStatus()) ? GAME_DURATION_SECONDS * 1000L : null;
         List<GameInfoResponse.PlayerPos> positions = null;
         GameInfoResponse.ArenaConfig arenaCfg = null;
         if ("PLAYING".equals(gs.getStatus())) {
@@ -179,10 +183,7 @@ public class GameService {
             )).collect(Collectors.toList())
         );
         messagingTemplate.convertAndSend(String.format("/topic/board/%s/state", gs.getCode()), waiting);
-        // auto-start if 2-4 players
-        if (gs.getPlayers().size() >= 2) {
-            startGame(gs);
-        }
+        // No auto-start on player count; countdown/explicit trigger governs start
     }
 
     private ColorStatus pickColor(GameSession gs) {
@@ -237,7 +238,7 @@ public class GameService {
             "code", code,
             "status", "PLAYING",
             "startTimestamp", gs.getStartedAt() != null ? gs.getStartedAt().toEpochMilli() : Instant.now().toEpochMilli(),
-            "duration", 40000,
+            "duration", (int)(GAME_DURATION_SECONDS * 1000),
             "playerPositions", positions,
             "players", gs.getPlayers().stream().map(p -> Map.of(
                 "playerId", p.playerId,
@@ -265,7 +266,7 @@ public class GameService {
         }
 
         // schedule end in 40 seconds
-        scheduler.schedule(() -> endGame(gs.getCode()), 40, TimeUnit.SECONDS);
+        scheduler.schedule(() -> endGame(gs.getCode()), GAME_DURATION_SECONDS, TimeUnit.SECONDS);
     }
 
     public void updatePlayer(String code, UpdatePlayerRequest req) {
@@ -336,11 +337,11 @@ public class GameService {
 
     public void restartGame(String code) {
         GameSession gs = gameRepository.findByCode(code).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found"));
-    // Reset state to WAITING with a new 40s join window
+    // Reset state to WAITING with a new join window
         gs.setStatus("WAITING");
         gs.setStartedAt(null);
         gs.setFinishedAt(null);
-    gs.setJoinDeadline(Instant.now().plusSeconds(40));
+        gs.setJoinDeadline(Instant.now().plusSeconds(JOIN_WINDOW_SECONDS));
         // Reset scores
         for (var p : gs.getPlayers()) p.score = 0;
         // Clear saved platforms snapshot
@@ -365,7 +366,7 @@ public class GameService {
         );
         messagingTemplate.convertAndSend(String.format("/topic/board/%s/state", gs.getCode()), waiting);
 
-        // Schedule auto-start in 40s
+        // Schedule auto-start when join window expires
         scheduler.schedule(() -> {
             try {
                 gameRepository.findByCode(code).ifPresent(current -> {
@@ -374,7 +375,7 @@ public class GameService {
                     }
                 });
             } catch (Exception ignored) {}
-        }, 40, TimeUnit.SECONDS);
+        }, JOIN_WINDOW_SECONDS, TimeUnit.SECONDS);
     }
 
     private String generateUniqueCode() {
