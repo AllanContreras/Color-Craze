@@ -57,7 +57,7 @@ export default function Game(){
   // Spawn a few particles when a cell gets painted to give it a cyber splash
   const spawnPaintParticles = (x, y, width, height, color) => {
     const out = particlesRef.current
-    const n = (arenaTheme === 'cyber') ? 6 : 3
+    const n = (arenaTheme === 'cyber') ? 2 : 3
     for (let i=0;i<n;i++){
       const angle = Math.random()*Math.PI - Math.PI/2
       const speed = 30 + Math.random()*90
@@ -292,7 +292,7 @@ export default function Game(){
     canvas.height = height
     const now = Date.now()
     if (arenaTheme === 'cyber'){
-      // Background: deep cyber gradient with a slight time shift
+  // Background: deep cyber gradient with a slight time shift
       const t = (now % 20000) / 20000
       const grad = ctx.createLinearGradient(0, 0, 0, height)
       grad.addColorStop(Math.max(0, 0.00 + t*0.05), '#0b1020')
@@ -459,8 +459,8 @@ export default function Game(){
       if (arenaTheme === 'cyber'){
         // shadow + base
         ctx.save()
-        ctx.shadowColor = 'rgba(0,246,255,0.25)'
-        ctx.shadowBlur = 12
+        ctx.shadowColor = 'rgba(0,246,255,0.20)'
+        ctx.shadowBlur = 8
         ctx.fillStyle = '#21263a'
         ctx.fillRect(pl.x, pl.y, pl.width, pl.height)
         ctx.restore()
@@ -473,8 +473,8 @@ export default function Game(){
         // neon edge
         ctx.save()
         ctx.shadowColor = '#00f6ff'
-        ctx.shadowBlur = 10
-        ctx.strokeStyle = 'rgba(0,246,255,0.9)'
+        ctx.shadowBlur = 6
+        ctx.strokeStyle = 'rgba(0,246,255,0.6)'
         ctx.lineWidth = 2
         ctx.strokeRect(pl.x+1, pl.y+1, pl.width-2, pl.height-2)
         ctx.restore()
@@ -545,17 +545,7 @@ export default function Game(){
           ctx.fillStyle = hex
           ctx.fillRect(cx, cy, cellW, pl.height)
           // style-specific enhancement
-          if (arenaTheme === 'cyber'){
-            // glow pass
-            ctx.save()
-            ctx.globalCompositeOperation = 'lighter'
-            ctx.shadowColor = hex
-            ctx.shadowBlur = 8
-            ctx.globalAlpha = 0.30
-            ctx.fillStyle = hex
-            ctx.fillRect(cx, cy, cellW, pl.height)
-            ctx.restore()
-          } else if (arenaTheme === 'metal') {
+          if (arenaTheme === 'metal') {
             // subtle sheen
             const g = ctx.createLinearGradient(cx, cy, cx+cellW, cy+pl.height)
             g.addColorStop(0,'rgba(255,255,255,0.05)')
@@ -592,7 +582,7 @@ export default function Game(){
         // glow body
         ctx.save()
         ctx.shadowColor = color
-        ctx.shadowBlur = 15
+        ctx.shadowBlur = 8
         ctx.fillStyle = color
         ctx.fillRect(p.x, p.y, 24, 32)
         ctx.restore()
