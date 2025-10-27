@@ -1,6 +1,7 @@
 package com.Color_craze.board.services;
 
 import java.util.UUID;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -38,7 +39,7 @@ public class BoardService {
 
     public MoveResult movePlayer(String gameCode, String playerId, PlayerMove playerMove) {
         Board b = getOrCreateBoard(gameCode);
-        UUID uuid = UUID.fromString(playerId);
+        UUID uuid = toUuid(playerId);
         return b.movePlayer(uuid, playerMove);
     }
 
@@ -65,10 +66,22 @@ public class BoardService {
 
     public void ensurePlayerOnBoard(String gameCode, String playerId, ColorStatus color) {
         Board b = getOrCreateBoard(gameCode);
-        UUID uuid = UUID.fromString(playerId);
+        UUID uuid = toUuid(playerId);
         if (!b.getPlayers().containsKey(uuid)) {
             Player p = new Player(uuid, color);
             b.addPlayer(p);
+        }
+    }
+
+    private UUID toUuid(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return UUID.randomUUID();
+        }
+        try {
+            return UUID.fromString(raw);
+        } catch (IllegalArgumentException ex) {
+            // Map any non-UUID string (e.g., Mongo ObjectId) to a stable UUID
+            return UUID.nameUUIDFromBytes(raw.getBytes(StandardCharsets.UTF_8));
         }
     }
 
