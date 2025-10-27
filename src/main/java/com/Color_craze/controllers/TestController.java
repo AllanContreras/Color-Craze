@@ -10,6 +10,11 @@ import java.util.HashMap;
 @CrossOrigin(origins = "*")
 public class TestController {
 
+    @GetMapping("/ping")
+    public String ping() {
+        return "pong";
+    }
+
     @GetMapping("/health")
     public ResponseEntity<?> health() {
         Map<String, Object> response = new HashMap<>();
