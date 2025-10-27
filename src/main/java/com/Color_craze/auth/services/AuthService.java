@@ -20,12 +20,14 @@ import io.jsonwebtoken.security.SignatureException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 /**
  * Service for handling authentication operations such as login and token refresh.
  * Uses MongoDB for user persistence.
  */
 @Service
+@ConditionalOnProperty(name = "spring.data.mongodb.uri", matchIfMissing = false)
 @RequiredArgsConstructor
 public class AuthService {
 

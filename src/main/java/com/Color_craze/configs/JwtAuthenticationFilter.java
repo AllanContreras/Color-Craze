@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import com.Color_craze.auth.services.JwtService;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -25,6 +26,7 @@ import lombok.RequiredArgsConstructor;
  * Filtro JWT para autenticar peticiones usando usuarios almacenados en MongoDB.
  */
 @Component
+@ConditionalOnProperty(name = "spring.data.mongodb.uri", matchIfMissing = false)
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 

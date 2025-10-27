@@ -14,19 +14,23 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.core.userdetails.UserDetailsService;
-
-import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Configuration
 @EnableWebSecurity
-@RequiredArgsConstructor
+@ConditionalOnProperty(name = "spring.data.mongodb.uri", matchIfMissing = false)
 public class SecurityConfig {
 
-    private final UserDetailsService userDetailsService;  
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    @Autowired(required = false)
+    private UserDetailsService userDetailsService;
+    
+    @Autowired(required = false)
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    @ConditionalOnProperty(name = "spring.data.mongodb.uri", matchIfMissing = false)
+    SecurityFilterChain mongoSecurityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
@@ -38,19 +42,21 @@ public class SecurityConfig {
     }
 
     @Bean
+    @ConditionalOnProperty(name = "spring.data.mongodb.uri", matchIfMissing = false)
     AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService); // Mongo UserDetailsService
+        authProvider.setUserDetailsService(userDetailsService);
         authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;
     }
 
     @Bean
     PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(); // Asegúrate de usar BCrypt al guardar usuarios en Mongo
+        return new BCryptPasswordEncoder();
     }
 
     @Bean
+    @ConditionalOnProperty(name = "spring.data.mongodb.uri", matchIfMissing = false)
     AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }

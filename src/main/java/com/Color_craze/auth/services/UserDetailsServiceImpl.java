@@ -13,8 +13,8 @@ import org.springframework.stereotype.Service;
 /**
  * Carga los detalles del usuario desde MongoDB para Spring Security.
  */
-@Service
-@ConditionalOnProperty(name = "spring.data.mongodb.uri")
+@Service("userDetailsServiceImpl")
+@ConditionalOnProperty(name = "spring.data.mongodb.uri", matchIfMissing = false)
 @RequiredArgsConstructor
 public class UserDetailsServiceImpl implements UserDetailsService {
 
