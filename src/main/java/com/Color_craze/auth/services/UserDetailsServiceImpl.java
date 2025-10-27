@@ -4,6 +4,7 @@ import com.Color_craze.auth.models.AuthUser;
 import com.Color_craze.auth.repositories.AuthRepository;
 import com.Color_craze.configs.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
  * Carga los detalles del usuario desde MongoDB para Spring Security.
  */
 @Service
+@ConditionalOnProperty(name = "spring.data.mongodb.uri")
 @RequiredArgsConstructor
 public class UserDetailsServiceImpl implements UserDetailsService {
 
