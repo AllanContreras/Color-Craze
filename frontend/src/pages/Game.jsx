@@ -153,7 +153,9 @@ export default function Game(){
             // randomizar tema si aún no se eligió
             const key = `${code}:${startMs}`
             if (themeAssignedKeyRef.current !== key){
-              setArenaTheme(prev => prev ?? pickRandomTheme())
+              // prefer server-provided theme if available
+              if (res.data.theme) setArenaTheme(res.data.theme)
+              else setArenaTheme(prev => prev ?? pickRandomTheme())
               themeAssignedKeyRef.current = key
             }
           }
@@ -168,6 +170,8 @@ export default function Game(){
           }
           // Arena config via GET (mid-game refresh)
           if (res.data.arena){ setArenaMode(true); setArenaConfig(res.data.arena) }
+          // Apply theme from GET if present (including WAITING state cases)
+          if (res.data.theme){ setArenaTheme(res.data.theme) }
         }
       }catch{}
     }
@@ -215,7 +219,8 @@ export default function Game(){
       if (body.startTimestamp){
         const key = `${code}:${body.startTimestamp}`
         if (themeAssignedKeyRef.current !== key){
-          setArenaTheme(prev => prev ?? pickRandomTheme())
+          if (body.theme) setArenaTheme(body.theme)
+          else setArenaTheme(prev => prev ?? pickRandomTheme())
           themeAssignedKeyRef.current = key
         }
       }
@@ -227,6 +232,10 @@ export default function Game(){
       platformPatternRef.current = null
       lastThemeRef.current = null
       lastPaintRef.current = {}
+    }
+    // Apply theme updates during WAITING
+    if (typeof body.theme !== 'undefined' && body.theme){
+      setArenaTheme(body.theme)
     }
     // fallback: si llega un timestamp de inicio, habilitar movimiento
     if (body.startTimestamp){
@@ -856,12 +865,10 @@ export default function Game(){
         <aside className="sidebar">
           <div style={{marginBottom:8}}>
             <label style={{marginRight:6}}>Estilo:</label>
-            <select value={arenaTheme ?? ''} onChange={(e)=>setArenaTheme(e.target.value)}>
-              <option value={arenaTheme ?? ''} disabled>{arenaTheme ? '(actual)' : '(aleatorio)'}</option>
-              <option value="metal">Metal</option>
-              <option value="cyber">Cyberpunk</option>
-              <option value="moon">Luna</option>
+            <select value={arenaTheme ?? ''} disabled>
+              <option value={arenaTheme ?? ''}>{arenaTheme ? arenaTheme : '(aleatorio)'}</option>
             </select>
+            <span style={{marginLeft:8, color:'#888'}}>(definido por el host)</span>
           </div>
           {!canMove && (
             <div style={{marginBottom:8, color:'#ddd'}}>Esperando a que comience el juego...</div>

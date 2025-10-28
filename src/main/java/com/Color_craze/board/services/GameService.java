@@ -22,6 +22,7 @@ import com.Color_craze.board.dtos.CreateGameResponse;
 import com.Color_craze.board.dtos.GameInfoResponse;
 import com.Color_craze.board.dtos.JoinGameRequest;
 import com.Color_craze.board.dtos.UpdatePlayerRequest;
+import com.Color_craze.board.dtos.UpdateThemeRequest;
 import com.Color_craze.utils.enums.ColorStatus;
 
 import lombok.RequiredArgsConstructor;
@@ -62,7 +63,8 @@ public class GameService {
             "code", code,
             "status", "WAITING",
             "joinDeadlineMs", gs.getJoinDeadline() != null ? gs.getJoinDeadline().toEpochMilli() : null,
-            "players", List.of()
+            "players", List.of(),
+            "theme", gs.getTheme()
         );
         messagingTemplate.convertAndSend(String.format("/topic/board/%s/state", code), waiting);
         // Programar inicio automático a los 40s
@@ -104,7 +106,7 @@ public class GameService {
         Long startedAtMs = gs.getStartedAt() != null ? gs.getStartedAt().toEpochMilli() : null;
     Long durationMs = "PLAYING".equals(gs.getStatus()) ? GAME_DURATION_SECONDS * 1000L : null;
         List<GameInfoResponse.PlayerPos> positions = null;
-        GameInfoResponse.ArenaConfig arenaCfg = null;
+    GameInfoResponse.ArenaConfig arenaCfg = null;
         if ("PLAYING".equals(gs.getStatus())) {
             var board = boardService.getOrCreateBoard(gs.getCode());
             positions = board.getPlayers().entrySet().stream()
@@ -126,7 +128,7 @@ public class GameService {
                 }
             } catch (Exception ignored) {}
         }
-        return new GameInfoResponse(gs.getCode(), gs.getStatus(), joinDeadlineMs, players, startedAtMs, durationMs, positions, arenaCfg);
+        return new GameInfoResponse(gs.getCode(), gs.getStatus(), joinDeadlineMs, players, startedAtMs, durationMs, positions, arenaCfg, gs.getTheme());
     }
 
     public Map<String, Object> handlePlayerMove(String code, String playerId, PlayerMove direction) {
@@ -217,7 +219,8 @@ public class GameService {
                 "color", p.color.name(),
                 "avatar", p.avatar == null ? null : sanitizeAvatar(p.avatar),
                 "score", p.score
-            )).collect(Collectors.toList())
+            )).collect(Collectors.toList()),
+            "theme", gs.getTheme()
         );
         messagingTemplate.convertAndSend(String.format("/topic/board/%s/state", gs.getCode()), waiting);
         // No auto-start on player count; countdown/explicit trigger governs start
@@ -290,7 +293,8 @@ public class GameService {
                 "color", p.color.name(),
                 "avatar", p.avatar == null ? null : sanitizeAvatar(p.avatar),
                 "score", p.score
-            )).collect(Collectors.toList())
+            )).collect(Collectors.toList()),
+            "theme", gs.getTheme()
         );
         // Initialize 2D arena and append its config to the state
         try {
@@ -347,7 +351,8 @@ public class GameService {
                 "color", p.color.name(),
                 "avatar", p.avatar == null ? null : sanitizeAvatar(p.avatar),
                 "score", p.score
-            )).collect(Collectors.toList())
+            )).collect(Collectors.toList()),
+            "theme", gs.getTheme()
         );
         messagingTemplate.convertAndSend(String.format("/topic/board/%s/state", gs.getCode()), waiting);
     }
@@ -406,7 +411,8 @@ public class GameService {
                 "color", p.color.name(),
                 "avatar", p.avatar == null ? null : sanitizeAvatar(p.avatar),
                 "score", p.score
-            )).collect(Collectors.toList())
+            )).collect(Collectors.toList()),
+            "theme", gs.getTheme()
         );
         messagingTemplate.convertAndSend(String.format("/topic/board/%s/state", gs.getCode()), waiting);
 
@@ -420,6 +426,48 @@ public class GameService {
                 });
             } catch (Exception ignored) {}
         }, JOIN_WINDOW_SECONDS, TimeUnit.SECONDS);
+    }
+
+    public void updateTheme(String code, UpdateThemeRequest req) {
+        GameSession gs = gameRepository.findByCode(code).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found"));
+        if (!"WAITING".equals(gs.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "No se puede cambiar el estilo durante la partida");
+        }
+        if (req.playerId() == null || req.playerId().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "playerId requerido");
+        }
+        // determine host: first player who joined the room
+        if (gs.getPlayers().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "No hay jugadores en la sala");
+        }
+        String hostId = gs.getPlayers().get(0).playerId;
+        if (!hostId.equals(req.playerId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Solo el creador de la sala puede cambiar el estilo");
+        }
+        String theme = sanitizeTheme(req.theme());
+        gs.setTheme(theme);
+        gameRepository.save(gs);
+        // Broadcast updated WAITING state including theme
+        Map<String, Object> waiting = Map.of(
+            "code", gs.getCode(),
+            "status", "WAITING",
+            "joinDeadlineMs", gs.getJoinDeadline() != null ? gs.getJoinDeadline().toEpochMilli() : null,
+            "players", gs.getPlayers().stream().map(p -> Map.of(
+                "playerId", p.playerId,
+                "nickname", p.nickname,
+                "color", p.color.name(),
+                "avatar", p.avatar == null ? null : sanitizeAvatar(p.avatar),
+                "score", p.score
+            )).collect(Collectors.toList()),
+            "theme", gs.getTheme()
+        );
+        messagingTemplate.convertAndSend(String.format("/topic/board/%s/state", gs.getCode()), waiting);
+    }
+
+    private String sanitizeTheme(String theme) {
+        if (theme == null) return null;
+        String v = theme.trim().toLowerCase();
+        return ("metal".equals(v) || "cyber".equals(v) || "moon".equals(v)) ? v : null;
     }
 
     private String generateUniqueCode() {

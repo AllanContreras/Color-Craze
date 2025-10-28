@@ -23,6 +23,8 @@ public class GameSession {
     private Instant finishedAt;
     private List<PlayerEntry> players = new ArrayList<>();
     private List<PlatformState> platforms = new ArrayList<>();
+    // Match-wide theme selected by the host while in WAITING: "metal" | "cyber" | "moon"
+    private String theme;
 
     public static class PlayerEntry {
         public String playerId;
@@ -78,4 +80,6 @@ public class GameSession {
     public void setPlayers(List<PlayerEntry> players) { this.players = players; }
     public List<PlatformState> getPlatforms() { return platforms; }
     public void setPlatforms(List<PlatformState> platforms) { this.platforms = platforms; }
+    public String getTheme() { return theme; }
+    public void setTheme(String theme) { this.theme = theme; }
 }

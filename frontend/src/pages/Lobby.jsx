@@ -9,6 +9,7 @@ export default function Lobby(){
   // Color is no longer selectable; it will be auto-assigned by the server
   const [color] = useState('')
   const [avatar, setAvatar] = useState('ROBOT')
+  const [theme, setTheme] = useState(null) // 'metal' | 'cyber' | 'moon'
   // No color availability tracking needed anymore
   const [usedColors, setUsedColors] = useState([])
   const [playersInRoom, setPlayersInRoom] = useState([])
@@ -32,6 +33,7 @@ export default function Lobby(){
         const res = await api.get(`/api/games/${code}`)
         const players = res.data.players || []
         setPlayersInRoom(players)
+        setTheme(res.data.theme || null)
   // Keep players list for display; ignore color availability UI
         // If I'm already in the room, reflect my current selection
         const me = players.find(p => p.playerId === playerIdRef.current)
@@ -75,6 +77,7 @@ export default function Lobby(){
           if (body.status === 'WAITING'){
             const players = body.players || []
             setPlayersInRoom(players)
+            if (typeof body.theme !== 'undefined') setTheme(body.theme || null)
             const me = players.find(p => p.playerId === playerIdRef.current)
             if (me){
               // Preselect my current avatar if not chosen yet
@@ -104,7 +107,8 @@ export default function Lobby(){
       alert(err.response?.data?.message || 'No se pudo unir a la sala')
       return
     }
-    nav(`/game/${newCode}`)
+    // Stay in lobby so the host can configure the theme
+    nav(`/lobby?code=${newCode}`)
   }
 
   const joinGame = async () => {
@@ -130,9 +134,34 @@ export default function Lobby(){
     nav(`/game/${code}`)
   }
 
+  const isHost = playersInRoom.length > 0 && playersInRoom[0]?.playerId === playerIdRef.current
+
+  const applyTheme = async (newTheme) => {
+    setTheme(newTheme)
+    if (!code || code.length !== 6) return
+    try{
+      await api.post(`/api/games/${code}/theme`, { playerId: playerIdRef.current, theme: newTheme })
+    }catch(err){
+      alert(err.response?.data?.message || 'No se pudo cambiar el estilo (solo el creador puede)')
+    }
+  }
+
   return (
     <div>
       <h3>Lobby</h3>
+      {/* Theme selection (host only) */}
+      <div style={{marginBottom:12}}>
+        <label style={{marginRight:8}}>Estilo de la partida:</label>
+        <select value={theme || ''} onChange={(e)=> applyTheme(e.target.value)} disabled={!isHost}>
+          <option value="" disabled>{theme ? '(seleccionado)' : '(elige uno)'}</option>
+          <option value="metal">Metal</option>
+          <option value="cyber">Cyberpunk</option>
+          <option value="moon">Luna</option>
+        </select>
+        {!isHost && (
+          <span style={{marginLeft:8, color:'#666'}}>(El creador elige el estilo)</span>
+        )}
+      </div>
       {/* Color selection removed: colors are assigned automatically by the server */}
       <div style={{marginBottom:12}}>
         <label style={{marginRight:8}}>Personaje:</label>

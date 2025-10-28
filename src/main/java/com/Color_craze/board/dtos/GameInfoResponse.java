@@ -10,7 +10,8 @@ public record GameInfoResponse(
     Long startedAtMs,
     Long durationMs,
     List<PlayerPos> playerPositions,
-    ArenaConfig arena
+    ArenaConfig arena,
+    String theme
 ) {
     public static record PlayerInfo(String playerId, String nickname, String color, String avatar, int score) {}
     public static record PlayerPos(String playerId, int row, int col, String color) {}

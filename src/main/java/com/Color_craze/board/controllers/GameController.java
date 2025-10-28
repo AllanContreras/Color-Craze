@@ -13,6 +13,7 @@ import com.Color_craze.board.dtos.CreateGameResponse;
 import com.Color_craze.board.dtos.GameInfoResponse;
 import com.Color_craze.board.dtos.JoinGameRequest;
 import com.Color_craze.board.dtos.UpdatePlayerRequest;
+import com.Color_craze.board.dtos.UpdateThemeRequest;
 import com.Color_craze.board.services.GameService;
 
 import lombok.RequiredArgsConstructor;
@@ -52,6 +53,12 @@ public class GameController {
     @PostMapping("/{code}/player")
     public ResponseEntity<Void> updatePlayer(@PathVariable String code, @RequestBody UpdatePlayerRequest req) {
         gameService.updatePlayer(code, req);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{code}/theme")
+    public ResponseEntity<Void> updateTheme(@PathVariable String code, @RequestBody UpdateThemeRequest req) {
+        gameService.updateTheme(code, req);
         return ResponseEntity.ok().build();
     }
 }
