@@ -292,7 +292,7 @@ export default function Game(){
     canvas.height = height
     const now = Date.now()
     if (arenaTheme === 'cyber'){
-  // Background: deep cyber gradient with a slight time shift
+      // Background: deep cyber gradient with a slight time shift
       const t = (now % 20000) / 20000
       const grad = ctx.createLinearGradient(0, 0, 0, height)
       grad.addColorStop(Math.max(0, 0.00 + t*0.05), '#0b1020')
@@ -300,9 +300,44 @@ export default function Game(){
       grad.addColorStop(Math.min(1, 0.70 + t*0.05), '#1a2454')
       ctx.fillStyle = grad
       ctx.fillRect(0,0,width,height)
-      // Subtle parallax scanlines
+      // Neon horizon glow
+      const hg = ctx.createLinearGradient(0, height*0.65, 0, height)
+      hg.addColorStop(0,'rgba(0,246,255,0.00)')
+      hg.addColorStop(1,'rgba(0,246,255,0.15)')
+      ctx.fillStyle = hg
+      ctx.fillRect(0, height*0.65, width, height*0.35)
+      // City skyline silhouettes (3 parallax layers)
+      const baseY = Math.floor(height*0.72)
+      const layers = [
+        { y: baseY, h: 90, color: '#0d142b', alpha: 0.8, step: 42 },
+        { y: baseY+12, h: 70, color: '#111a39', alpha: 0.65, step: 50 },
+        { y: baseY+24, h: 50, color: '#162049', alpha: 0.5, step: 58 },
+      ]
       ctx.save()
-      ctx.globalAlpha = 0.12
+      for (const L of layers){
+        ctx.globalAlpha = L.alpha
+        ctx.fillStyle = L.color
+        for (let x=0; x<width;){
+          const w = 24 + ((x/ L.step) % 1)*20 // deterministic pseudo-variation
+          const bh = 20 + ((Math.sin(x*0.03)+1)*0.5)*L.h
+          ctx.fillRect(x, L.y - bh, w, bh)
+          // a few horizontal window bands
+          ctx.globalAlpha = L.alpha * 0.12
+          ctx.fillStyle = '#37e5ff'
+          const rows = 2
+          for (let r=1;r<=rows;r++){
+            const wy = L.y - Math.floor(bh*(r/(rows+1)))
+            ctx.fillRect(x+3, wy, w-6, 2)
+          }
+          ctx.globalAlpha = L.alpha
+          ctx.fillStyle = L.color
+          x += Math.max(18, w)
+        }
+      }
+      ctx.restore()
+      // Subtle diagonal light streaks
+      ctx.save()
+      ctx.globalAlpha = 0.10
       ctx.fillStyle = '#00f6ff'
       for (let i=0;i<3;i++){
         const yy = (now*0.02 + i*60) % (height+120) - 120
@@ -310,13 +345,13 @@ export default function Game(){
       }
       ctx.restore()
     } else if (arenaTheme === 'metal') {
-      // Metal: dark steel with brushed lines and vignette
+      // Metal: warehouse vibe (steel walls, beams, lights)
       const grad = ctx.createLinearGradient(0, 0, 0, height)
       grad.addColorStop(0, '#1a1d22')
       grad.addColorStop(1, '#2b2f36')
       ctx.fillStyle = grad
       ctx.fillRect(0,0,width,height)
-      // brushed effect (horizontal thin strokes)
+      // Horizontal brushed strokes
       ctx.save()
       ctx.globalAlpha = 0.06
       ctx.strokeStyle = '#ffffff'
@@ -324,7 +359,58 @@ export default function Game(){
         ctx.beginPath(); ctx.moveTo(0,y+0.5); ctx.lineTo(width,y+0.5); ctx.stroke()
       }
       ctx.restore()
-      // vignette
+      // Vertical steel beams with cross braces
+      ctx.save()
+      const beamW = Math.max(14, Math.floor(width*0.02))
+      for (let x=0; x<width; x+= Math.max(160, Math.floor(width*0.16))){
+        ctx.fillStyle = '#232830'; ctx.fillRect(x, 0, beamW, height)
+        // bevel
+        ctx.fillStyle = 'rgba(255,255,255,0.10)'; ctx.fillRect(x+1, 0, 1, height)
+        ctx.fillStyle = 'rgba(0,0,0,0.30)'; ctx.fillRect(x+beamW-2, 0, 1, height)
+        // cross braces
+        ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 2
+        ctx.beginPath();
+        for (let y=0; y<height; y+=40){
+          ctx.moveTo(x, y); ctx.lineTo(x+beamW, y+40)
+          ctx.moveTo(x+beamW, y); ctx.lineTo(x, y+40)
+        }
+        ctx.stroke()
+      }
+      ctx.restore()
+      // Overhead lights
+      ctx.save()
+      ctx.globalAlpha = 0.45
+      for (let i=0; i<5; i++){
+        const lx = Math.floor((i+1)*(width/6))
+        const ly = Math.floor(height*0.12)
+        ctx.fillStyle = '#d7dbe6'; ctx.fillRect(lx-18, ly-6, 36, 6)
+        const glow = ctx.createRadialGradient(lx, ly, 2, lx, ly, 120)
+        glow.addColorStop(0,'rgba(220,230,255,0.18)')
+        glow.addColorStop(1,'rgba(220,230,255,0.00)')
+        ctx.fillStyle = glow
+        ctx.fillRect(lx-140, ly-40, 280, 160)
+      }
+      ctx.restore()
+      // Large rolling door silhouette in the back
+      ctx.save()
+      const doorW = Math.min(380, width*0.38)
+      const doorH = Math.min(120, height*0.22)
+      const dx = Math.floor((width-doorW)/2)
+      const dy = Math.floor(height*0.54)
+      ctx.fillStyle = '#1c2027'; ctx.fillRect(dx, dy, doorW, doorH)
+      ctx.fillStyle = 'rgba(255,255,255,0.05)'
+      for (let y=dy+6; y<dy+doorH; y+=10){ ctx.fillRect(dx+6, y, doorW-12, 2) }
+      ctx.restore()
+      // Caution stripes along the floor
+      ctx.save()
+      const floorY = Math.floor(height*0.92)
+      ctx.fillStyle = '#13161b'; ctx.fillRect(0, floorY, width, height-floorY)
+      for (let x=0; x<width; x+=28){
+        ctx.fillStyle = '#f2c200'; ctx.fillRect(x, floorY, 20, 8)
+        ctx.fillStyle = '#2a2f36'; ctx.fillRect(x+20, floorY, 8, 8)
+      }
+      ctx.restore()
+      // Soft side vignette
       ctx.save()
       const v = ctx.createLinearGradient(0,0,0,height)
       v.addColorStop(0,'rgba(0,0,0,0.35)')
