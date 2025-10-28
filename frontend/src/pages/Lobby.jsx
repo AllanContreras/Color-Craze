@@ -11,6 +11,7 @@ export default function Lobby(){
   const [color] = useState('')
   const [avatar, setAvatar] = useState('ROBOT')
   const [theme, setTheme] = useState(null) // 'metal' | 'cyber' | 'moon'
+  const [creating, setCreating] = useState(false)
   // No color availability tracking needed anymore
   const [usedColors, setUsedColors] = useState([])
   const [playersInRoom, setPlayersInRoom] = useState([])
@@ -97,26 +98,43 @@ export default function Lobby(){
   },[code, nav])
 
   const createGame = async () => {
-  const res = await api.post('/api/games')
-    const newCode = res.data.code
-    setCode(newCode)
-    // auto-join; color will be assigned by server
-    const playerId = localStorage.getItem('cc_userId')
-    const nickname = localStorage.getItem('cc_nickname')
-    try{
-  await api.post(`/api/games/${newCode}/join`, { playerId, nickname, avatar })
-    }catch(err){
-      alert(err.response?.data?.message || 'No se pudo unir a la sala')
-      return
+    if (creating) return
+    setCreating(true)
+    // Ensure identity exists
+    let playerId = localStorage.getItem('cc_userId')
+    if (!playerId || playerId.trim() === ''){
+      playerId = `guest_${Math.random().toString(36).slice(2,8)}`
+      localStorage.setItem('cc_userId', playerId)
     }
-    // If a theme was chosen before creating, apply it now as host
-    try{
-      if (theme) {
-        await api.post(`/api/games/${newCode}/theme`, { playerId, theme })
+    let nickname = localStorage.getItem('cc_nickname')
+    if (!nickname || nickname.trim() === ''){
+      nickname = playerId
+      localStorage.setItem('cc_nickname', nickname)
+    }
+    try {
+      const res = await api.post('/api/games')
+      const newCode = res.data.code
+      setCode(newCode)
+      // auto-join; color will be assigned by the server
+      try{
+        await api.post(`/api/games/${newCode}/join`, { playerId, nickname, avatar })
+      }catch(err){
+        alert(err?.response?.data?.message || 'No se pudo unir a la sala')
+        return
       }
-    }catch(err){ /* non-blocking */ }
-    // Stay in lobby so the host can configure the theme
-    nav(`/lobby?code=${newCode}`)
+      // If a theme was chosen before creating, apply it now as host
+      try{
+        if (theme) {
+          await api.post(`/api/games/${newCode}/theme`, { playerId, theme })
+        }
+      }catch{ /* non-blocking */ }
+      // Stay in lobby so the host can configure the theme
+      nav(`/lobby?code=${newCode}`)
+    } catch (err) {
+      alert(err?.response?.data?.message || 'No se pudo crear la sala')
+    } finally {
+      setCreating(false)
+    }
   }
 
   const joinGame = async () => {
@@ -196,7 +214,7 @@ export default function Lobby(){
           </ul>
         </div>
       )}
-      <button onClick={createGame}>Crear sala</button>
+  <button onClick={createGame} disabled={creating}>{creating ? 'Creando...' : 'Crear sala'}</button>
       <hr />
       <input value={code} onChange={e=>setCode(e.target.value)} placeholder="Código" />
       {/* Show join or update depending on membership */}
