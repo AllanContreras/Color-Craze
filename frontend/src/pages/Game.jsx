@@ -41,6 +41,7 @@ export default function Game(){
   const canvasRef = useRef(null)
   const inputRef = useRef({left:false,right:false,jump:false})
   const [arenaTheme, setArenaTheme] = useState(null) // 'metal' | 'cyber' | 'moon' (null => assign randomly on start)
+  const [coverageByColor, setCoverageByColor] = useState({}) // color name -> percentage (0-100)
   // Cyberpunk visuals state
   const platformPatternRef = useRef(null) // CanvasPattern cache for platform texture
   const lastPaintRef = useRef({})         // Per-platform snapshot of previous paint colors
@@ -690,6 +691,28 @@ export default function Game(){
     }
   },[arenaMode, arenaConfig, arenaFrame, players, arenaTheme])
 
+  // Compute territory coverage by color (percentage of painted cells)
+  useEffect(()=>{
+    if (!arenaMode || !arenaConfig || !arenaFrame || !arenaFrame.paint) { setCoverageByColor({}); return }
+    let total = 0
+    const counts = {}
+    for (let i=0;i<arenaConfig.platforms.length;i++){
+      const arr = arenaFrame.paint[i]
+      if (!arr) continue
+      for (let c of arr){
+        if (!c) continue
+        total++
+        counts[c] = (counts[c]||0) + 1
+      }
+    }
+    if (total === 0){ setCoverageByColor({}); return }
+    const out = {}
+    for (const [col, n] of Object.entries(counts)){
+      out[col] = Math.round((n/total)*100)
+    }
+    setCoverageByColor(out)
+  },[arenaMode, arenaConfig, arenaFrame])
+
   const handleMove = (body) => {
     setMessages(msgs => [...msgs, {t:'move', body}])
     if (body && body.success === false) return
@@ -780,9 +803,30 @@ export default function Game(){
     <div className="game-page">
       <h3>Game {code}</h3>
       <div className="game-layout">
-        <main className="board-wrap">
+        <main className="board-wrap" style={{position:'relative'}}>
           {arenaMode ? (
-            <canvas ref={canvasRef} style={{background:'#111827', border:'1px solid #333'}} />
+            <>
+              <canvas ref={canvasRef} style={{background:'#111827', border:'1px solid #333'}} />
+              {/* Territory HUD */}
+              <div style={{position:'absolute', top:8, left:8, right:8, display:'flex', gap:12, justifyContent:'center', pointerEvents:'none', zIndex:5}}>
+                {players.map(p => {
+                  const colName = (p.color||'').toUpperCase()
+                  const percent = coverageByColor[colName] || 0
+                  const fill = colorToHex(colName)
+                  const emoji = avatarToEmoji(sanitizeAvatar(p.avatar))
+                  const barBg = arenaTheme==='metal' ? '#1f2430' : arenaTheme==='cyber' ? '#0b1020' : '#1a1d22'
+                  return (
+                    <div key={p.playerId} style={{display:'flex', alignItems:'center', gap:8, padding:'6px 10px', borderRadius:16, background:'rgba(0,0,0,0.35)', border:'1px solid rgba(255,255,255,0.15)', boxShadow:'0 2px 6px rgba(0,0,0,0.25)', pointerEvents:'none'}}>
+                      <div style={{width:28,height:28,borderRadius:'50%',background:'#222',border:`2px solid ${fill}`,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:16,lineHeight:'28px',boxShadow:`0 0 6px ${arenaTheme==='cyber'?fill+'66':'#00000055'}`}}>{emoji}</div>
+                      <div style={{width:160, height:16, borderRadius:12, background:barBg, border:'1px solid #333', overflow:'hidden', position:'relative'}}>
+                        <div style={{width:`${percent}%`, height:'100%', background:fill, opacity:0.9}} />
+                        <div style={{position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:12, textShadow:'0 1px 2px #000'}}>{percent}%</div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </>
           ) : (
             <div className={`grid ${fullMode ? 'large' : ''} ${ultraMode ? 'ultra' : ''}`}>
               {grid.map((row, rIdx) => row.map((cell, cIdx) => {
