@@ -4,7 +4,6 @@
 	--card: rgba(255,255,255,0.06);
 	--muted: rgba(255,255,255,0.7);
 	--accent: #7c3aed;
-	--sidebar-w: 300px;
 	--gap: 24px;
 	--nudge-left: 48px; /* tweak this to move sidebar/layout more or less to the left */
 	--card-pad: 18px;
@@ -55,10 +54,10 @@ button:disabled{ opacity:0.5; cursor:not-allowed }
 
 .events pre{ background: rgba(255,255,255,0.02); padding:8px; border-radius:6px; color: #e6eef8; }
 
-/* Game layout: board on the left, sidebar on the right */
+/* Game layout: single column, full-width board */
 .game-page{ min-height:100vh; display:grid; grid-template-rows: auto 1fr; margin-left: 0 }
-.game-layout{ display: grid; grid-template-columns: 1fr var(--sidebar-w); column-gap: var(--gap); align-items:center; width:100%; height:100%; margin-left: 0 }
-.sidebar{ margin:0; padding-left:0 }
+.game-layout{ display: grid; grid-template-columns: 1fr; column-gap: var(--gap); align-items:center; width:100%; height:100%; margin-left: 0 }
+.sidebar{ display:none }
 /* Left-align the board area */
 .board-wrap{ display:flex; justify-content:flex-start; align-items:center; width:100%; height:100%; }
 
@@ -97,3 +96,10 @@ button:disabled{ opacity:0.5; cursor:not-allowed }
 	0%{ transform: translateY(-20px) rotate(0deg) }
 	100%{ transform: translateY(120vh) rotate(360deg) }
 }
+
+/* Prominent match timer */
+.hud-timer{ position:absolute; top:12px; left:50%; transform: translateX(-50%); z-index:6; pointer-events:none; padding:6px 14px; border-radius:12px; border:1px solid rgba(255,255,255,0.15); font-weight:900; letter-spacing:1px; }
+.hud-timer.default{ font-size:48px; color:#ffffff; text-shadow: 0 2px 6px rgba(0,0,0,0.5); background:rgba(0,0,0,0.35) }
+.hud-timer.cyber{ font-size:56px; color:#00f6ff; text-shadow: 0 0 10px rgba(0,246,255,0.8), 0 0 20px rgba(0,246,255,0.5); background: rgba(11,16,32,0.5); border-color: rgba(0,246,255,0.35) }
+.hud-timer.metal{ font-size:54px; color:#e5e7eb; text-shadow: 0 2px 0 #111, 0 4px 14px rgba(0,0,0,0.6); background: linear-gradient(180deg, rgba(41,45,53,0.65), rgba(23,26,32,0.65)); border-color: rgba(255,255,255,0.18) }
+.hud-timer.moon{ font-size:56px; color:#ffffff; text-shadow: 0 0 10px rgba(220,230,255,0.9), 0 0 24px rgba(180,200,255,0.6); background: rgba(14,17,24,0.45); border-color: rgba(255,255,255,0.18) }

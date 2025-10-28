@@ -846,7 +846,7 @@ export default function Game(){
               <canvas ref={canvasRef} style={{background:'#111827', border:'1px solid #333'}} />
               {/* Territory HUD (show only when playing/movable) */}
               {canMove && (
-                <div style={{position:'absolute', top:8, left:8, right:8, display:'flex', gap:12, justifyContent:'center', pointerEvents:'none', zIndex:5}}>
+                <div style={{position:'absolute', top: (typeof timeLeft === 'number' ? 80 : 8), left:8, right:8, display:'flex', gap:12, justifyContent:'center', pointerEvents:'none', zIndex:5}}>
                   {players.map(p => {
                     const colName = (p.color||'').toUpperCase()
                     const percent = coverageByColor[colName] || 0
@@ -898,33 +898,14 @@ export default function Game(){
               }))}
             </div>
           )}
-        </main>
-
-        <aside className="sidebar">
-          <div style={{marginBottom:8}}>
-            <label style={{marginRight:6}}>Estilo:</label>
-            <span style={{fontWeight:600}}>{arenaTheme || 'aleatorio'}</span>
-            <span style={{marginLeft:8, color:'#888'}}>(definido por el servidor)</span>
-          </div>
-          {!canMove && (
-            <div style={{marginBottom:8, color:'#ddd'}}>Esperando a que comience el juego...</div>
+          {/* Prominent match timer during PLAYING */}
+          {canMove && typeof timeLeft === 'number' && (
+            <div className={`hud-timer ${arenaTheme || 'default'}`}>
+              {formatTime(timeLeft)}
+            </div>
           )}
-            {joinLeft !== null && timeLeft===null && (
-              <div>La partida comienza en: {joinLeft}s</div>
-            )}
-            <div>Tiempo de partida: {timeLeft===null?'-':timeLeft}s</div>
-          <div style={{marginTop:12}}>
-            <h4>Players</h4>
-            <ul>
-                {players.map(p => (
-                  <li key={p.playerId || p.id}>
-                    <span style={{display:'inline-block', width:12, height:12, background: colorToHex(p.color), border:'1px solid #666', marginRight:6}} />
-                    {p.nickname || p.playerId || p.id} {p.avatar ? <span style={{marginLeft:4}}>{avatarToEmoji(p.avatar)}</span> : null} - {p.color} - {p.score ?? 0}
-                  </li>
-                ))}
-            </ul>
-          </div>
-        </aside>
+        </main>
+        {/* Removed right sidebar: style/time/players panel hidden as requested */}
       </div>
 
       <div style={{marginTop:12}}>
@@ -1000,6 +981,14 @@ function colorToHex(name){
     case 'WHITE': return '#FFFFFF'
     default: return '#CCCCCC'
   }
+}
+
+// Format seconds into MM:SS
+function formatTime(total){
+  const s = Math.max(0, Math.floor(total||0))
+  const m = Math.floor(s/60)
+  const ss = s%60
+  return `${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`
 }
 
 // Simple mapping from avatar name to an emoji marker
