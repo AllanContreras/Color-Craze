@@ -890,27 +890,58 @@ export default function Game(){
       </div>
   </div>
     {endStandings && (
-      <div style={{position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', display:'flex', alignItems:'center', justifyContent:'center'}}>
-        <div style={{background:'#111827', padding:20, borderRadius:12, width:420}}>
-          <h3>Resultados</h3>
-          {endStandings.length>0 && (
-            <div style={{marginBottom:12}}>
-              Ganador: <strong>{endStandings[0].nickname || endStandings[0].playerId}</strong> {endStandings[0].avatar ? <span style={{marginLeft:6}}>{avatarToEmoji(endStandings[0].avatar)}</span> : null} con <strong>{endStandings[0].score}</strong> puntos
+      (()=>{
+        const idToColor = new Map(players.map(p => [p.playerId, colorToHex(p.color)]))
+        const winner = endStandings[0]
+        const winnerColor = idToColor.get(winner?.playerId) || '#7c3aed'
+        const pieces = Array.from({length:18}).map((_,i)=>{
+          const left = Math.floor((i/18)*100)
+          const delay = (i%6)*0.25
+          const hue = (i*37)%360
+          return <span key={i} className="confetti-piece" style={{left: left+'%', background:`hsl(${hue} 90% 60%)`, animationDelay: `${delay}s`}} />
+        })
+        return (
+          <div className="results-overlay">
+            <div className="confetti">{pieces}</div>
+            <div className="results-card">
+              {winner && (
+                <div className="winner-card" style={{borderColor: winnerColor}}>
+                  <div className="winner-badge" style={{boxShadow: `0 0 12px ${winnerColor}55`}}>
+                    <span className="crown">👑</span>
+                    <span className="avatar">{winner.avatar ? avatarToEmoji(winner.avatar) : '⭐'}</span>
+                  </div>
+                  <div className="winner-text">
+                    <div className="title">¡Ganador!</div>
+                    <div className="name">{winner.nickname || winner.playerId}</div>
+                    <div className="score"><span style={{color:winnerColor,fontWeight:700}}>{winner.score}</span> puntos</div>
+                  </div>
+                </div>
+              )}
+              <div className="standings">
+                <ul>
+                  {endStandings.map((s, idx)=>{
+                    const col = idToColor.get(s.playerId) || '#9aa4b2'
+                    return (
+                      <li key={s.playerId} className="standing-item" style={{borderColor: col}}>
+                        <div className="place">{idx+1}</div>
+                        <div className="who">
+                          <span className="who-avatar" style={{borderColor: col}}>{s.avatar ? avatarToEmoji(s.avatar) : '⭐'}</span>
+                          <div className="who-name">{s.nickname || s.playerId}</div>
+                        </div>
+                        <div className="pts"><span style={{color:col}}>{s.score}</span> pts</div>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
+              <div className="results-actions">
+                <button onClick={async ()=> { try { await api.post(`/api/games/${code}/restart`) } catch {} navigate(`/lobby?code=${code}`) }}>Regresar a la sala</button>
+                <button onClick={()=> { if (window.opener && !window.opener.closed) window.close(); else navigate('/') }}>Salir</button>
+              </div>
             </div>
-          )}
-          <div style={{maxHeight:180, overflow:'auto', marginBottom:12}}>
-            <ul>
-              {endStandings.map((s,idx)=>(
-                <li key={s.playerId}>{idx+1}. {s.nickname || s.playerId} {s.avatar ? <span style={{marginLeft:6}}>{avatarToEmoji(s.avatar)}</span> : null} - {s.score}</li>
-              ))}
-            </ul>
           </div>
-          <div style={{display:'flex', gap:8, justifyContent:'flex-end'}}>
-            <button onClick={async ()=> { try { await api.post(`/api/games/${code}/restart`) } catch {} navigate(`/lobby?code=${code}`) }}>Regresar a la sala</button>
-            <button onClick={()=> { if (window.opener && !window.opener.closed) window.close(); else navigate('/') }}>Salir</button>
-          </div>
-        </div>
-      </div>
+        )
+      })()
     )}
     </>
   )
