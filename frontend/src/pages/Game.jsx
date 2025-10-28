@@ -865,12 +865,23 @@ export default function Game(){
                   })}
                 </div>
               )}
-              {/* Countdown overlay when waiting */}
-              {!canMove && joinLeft !== null && (
-                <div style={{position:'absolute', bottom:12, left:0, right:0, display:'flex', justifyContent:'center', zIndex:5, pointerEvents:'none'}}>
-                  <div style={{background:'rgba(0,0,0,0.5)', color:'#fff', padding:'8px 12px', borderRadius:8, border:'1px solid rgba(255,255,255,0.2)'}}>
-                    La partida comienza en: {joinLeft}s — Estilo: {arenaTheme || 'aleatorio'}
-                  </div>
+              {/* Waiting players list (only in WAITING) */}
+              {!canMove && players && players.length > 0 && (
+                <div className={`waiting-players ${arenaTheme || 'default'}`}>
+                  <div className="wp-title">Jugadores</div>
+                  <ul>
+                    {players.map(p => {
+                      const col = colorToHex(p.color)
+                      const emoji = avatarToEmoji(sanitizeAvatar(p.avatar))
+                      return (
+                        <li key={p.playerId || p.id}>
+                          <span className="wp-dot" style={{background: col}} />
+                          <span className="wp-name">{p.nickname || p.playerId || p.id}</span>
+                          <span className="wp-emoji">{emoji}</span>
+                        </li>
+                      )
+                    })}
+                  </ul>
                 </div>
               )}
             </>
@@ -898,11 +909,12 @@ export default function Game(){
               }))}
             </div>
           )}
-          {/* Prominent match timer during PLAYING */}
-          {canMove && typeof timeLeft === 'number' && (
-            <div className={`hud-timer ${arenaTheme || 'default'}`}>
-              {formatTime(timeLeft)}
-            </div>
+          {/* Prominent match timer during PLAYING or WAITING (theme-styled) */}
+          {(canMove && typeof timeLeft === 'number') && (
+            <div className={`hud-timer ${arenaTheme || 'default'}`}>{formatTime(timeLeft)}</div>
+          )}
+          {(!canMove && typeof joinLeft === 'number') && (
+            <div className={`hud-timer ${arenaTheme || 'default'}`}>{formatTime(joinLeft)}</div>
           )}
         </main>
         {/* Removed right sidebar: style/time/players panel hidden as requested */}
