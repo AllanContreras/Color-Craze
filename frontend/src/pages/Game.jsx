@@ -911,18 +911,13 @@ export default function Game(){
           )}
           {/* Prominent match timer during PLAYING or WAITING (theme-styled) */}
           {(canMove && typeof timeLeft === 'number') && (
-            <div className={`hud-timer ${arenaTheme || 'default'}`}>{formatTime(timeLeft)}</div>
+            <div className={`hud-timer ${arenaTheme || 'default'} playing`}>{formatTime(timeLeft)}</div>
           )}
           {(!canMove && typeof joinLeft === 'number') && (
-            <div className={`hud-timer ${arenaTheme || 'default'}`}>{formatTime(joinLeft)}</div>
+            <div className={`hud-timer ${arenaTheme || 'default'} waiting`}>{formatTime(joinLeft)}</div>
           )}
         </main>
         {/* Removed right sidebar: style/time/players panel hidden as requested */}
-      </div>
-
-      <div style={{marginTop:12}}>
-        <h4>Eventos</h4>
-        <pre style={{background:'#eee', padding:8, maxHeight:200, overflow:'auto'}}>{JSON.stringify(messages.slice(-20),null,2)}</pre>
       </div>
   </div>
     {endStandings && (
