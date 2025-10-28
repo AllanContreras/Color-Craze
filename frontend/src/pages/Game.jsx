@@ -865,10 +865,8 @@ export default function Game(){
         <aside className="sidebar">
           <div style={{marginBottom:8}}>
             <label style={{marginRight:6}}>Estilo:</label>
-            <select value={arenaTheme ?? ''} disabled>
-              <option value={arenaTheme ?? ''}>{arenaTheme ? arenaTheme : '(aleatorio)'}</option>
-            </select>
-            <span style={{marginLeft:8, color:'#888'}}>(definido por el host)</span>
+            <span style={{fontWeight:600}}>{arenaTheme || 'aleatorio'}</span>
+            <span style={{marginLeft:8, color:'#888'}}>(definido por el servidor)</span>
           </div>
           {!canMove && (
             <div style={{marginBottom:8, color:'#ddd'}}>Esperando a que comience el juego...</div>

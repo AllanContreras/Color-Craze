@@ -57,6 +57,8 @@ public class GameService {
         Instant now = Instant.now();
         gs.setCreatedAt(now);
         gs.setJoinDeadline(now.plusSeconds(JOIN_WINDOW_SECONDS));
+        // Assign a random theme at room creation so everyone sees the same style
+        gs.setTheme(pickRandomTheme());
         gameRepository.save(gs);
         // Publicar estado inicial de WAITING (para countdown en clientes)
         Map<String, Object> waiting = Map.of(
@@ -391,6 +393,8 @@ public class GameService {
         gs.setStartedAt(null);
         gs.setFinishedAt(null);
         gs.setJoinDeadline(Instant.now().plusSeconds(JOIN_WINDOW_SECONDS));
+        // Pick a new random theme for the next match
+        gs.setTheme(pickRandomTheme());
         // Reset scores
         for (var p : gs.getPlayers()) p.score = 0;
         // Clear saved platforms snapshot
@@ -429,45 +433,19 @@ public class GameService {
     }
 
     public void updateTheme(String code, UpdateThemeRequest req) {
-        GameSession gs = gameRepository.findByCode(code).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found"));
-        if (!"WAITING".equals(gs.getStatus())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "No se puede cambiar el estilo durante la partida");
-        }
-        if (req.playerId() == null || req.playerId().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "playerId requerido");
-        }
-        // determine host: first player who joined the room
-        if (gs.getPlayers().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "No hay jugadores en la sala");
-        }
-        String hostId = gs.getPlayers().get(0).playerId;
-        if (!hostId.equals(req.playerId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Solo el creador de la sala puede cambiar el estilo");
-        }
-        String theme = sanitizeTheme(req.theme());
-        gs.setTheme(theme);
-        gameRepository.save(gs);
-        // Broadcast updated WAITING state including theme
-        Map<String, Object> waiting = Map.of(
-            "code", gs.getCode(),
-            "status", "WAITING",
-            "joinDeadlineMs", gs.getJoinDeadline() != null ? gs.getJoinDeadline().toEpochMilli() : null,
-            "players", gs.getPlayers().stream().map(p -> Map.of(
-                "playerId", p.playerId,
-                "nickname", p.nickname,
-                "color", p.color.name(),
-                "avatar", p.avatar == null ? null : sanitizeAvatar(p.avatar),
-                "score", p.score
-            )).collect(Collectors.toList()),
-            "theme", gs.getTheme()
-        );
-        messagingTemplate.convertAndSend(String.format("/topic/board/%s/state", gs.getCode()), waiting);
+        // Theme selection is now server-random and cannot be changed manually
+        throw new ResponseStatusException(HttpStatus.CONFLICT, "El estilo es aleatorio y no se puede cambiar");
     }
 
     private String sanitizeTheme(String theme) {
         if (theme == null) return null;
         String v = theme.trim().toLowerCase();
         return ("metal".equals(v) || "cyber".equals(v) || "moon".equals(v)) ? v : null;
+    }
+
+    private String pickRandomTheme() {
+        String[] themes = new String[]{"metal", "cyber", "moon"};
+        return themes[random.nextInt(themes.length)];
     }
 
     private String generateUniqueCode() {

@@ -10,7 +10,7 @@ export default function Lobby(){
   // Color is no longer selectable; it will be auto-assigned by the server
   const [color] = useState('')
   const [avatar, setAvatar] = useState('ROBOT')
-  const [theme, setTheme] = useState(null) // 'metal' | 'cyber' | 'moon'
+  const [theme, setTheme] = useState(null) // 'metal' | 'cyber' | 'moon' (server-random)
   const [creating, setCreating] = useState(false)
   // No color availability tracking needed anymore
   const [usedColors, setUsedColors] = useState([])
@@ -122,12 +122,6 @@ export default function Lobby(){
         alert(err?.response?.data?.message || 'No se pudo unir a la sala')
         return
       }
-      // If a theme was chosen before creating, apply it now as host
-      try{
-        if (theme) {
-          await api.post(`/api/games/${newCode}/theme`, { playerId, theme })
-        }
-      }catch{ /* non-blocking */ }
       // Stay in lobby so the host can configure the theme
       nav(`/lobby?code=${newCode}`)
     } catch (err) {
@@ -163,34 +157,15 @@ export default function Lobby(){
   const isHost = playersInRoom.length > 0 && playersInRoom[0]?.playerId === playerIdRef.current
   const inRoom = playersInRoom.length > 0
 
-  const applyTheme = async (newTheme) => {
-    setTheme(newTheme)
-    // If not in a room yet, just persist locally; apply on createGame
-    if (!code || code.length !== 6 || !inRoom) return
-    try{
-      await api.post(`/api/games/${code}/theme`, { playerId: playerIdRef.current, theme: newTheme })
-    }catch(err){
-      alert(err.response?.data?.message || 'No se pudo cambiar el estilo (solo el creador puede)')
-    }
-  }
+  // Theme is now server-random; no manual apply needed
 
   return (
     <div>
       <h3>Lobby</h3>
-      {/* Theme selection: before joining/creating it's open for anyone; once inside a room, only the host can change it */}
+      {/* Theme display: server chooses randomly; show selected theme when available */}
       <div style={{marginBottom:12}}>
-        <label style={{marginRight:8}}>Estilo de la partida:</label>
-        <select value={theme || ''} onChange={(e)=> applyTheme(e.target.value)} disabled={inRoom && !isHost}>
-          <option value="" disabled>{theme ? '(seleccionado)' : '(elige uno)'}</option>
-          <option value="metal">Metal</option>
-          <option value="cyber">Cyberpunk</option>
-          <option value="moon">Luna</option>
-        </select>
-        {inRoom && !isHost ? (
-          <span style={{marginLeft:8, color:'#666'}}>(El creador elige el estilo)</span>
-        ) : (
-          <span style={{marginLeft:8, color:'#666'}}>(Puedes elegir antes de crear la sala)</span>
-        )}
+        <label style={{marginRight:8}}>Estilo:</label>
+        <span style={{fontWeight:600}}>{theme || 'aleatorio (servidor)'}</span>
       </div>
       {/* Color selection removed: colors are assigned automatically by the server */}
       <div style={{marginBottom:12}}>
