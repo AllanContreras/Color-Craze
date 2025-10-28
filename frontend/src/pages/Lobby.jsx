@@ -122,8 +122,8 @@ export default function Lobby(){
         alert(err?.response?.data?.message || 'No se pudo unir a la sala')
         return
       }
-      // Stay in lobby so the host can configure the theme
-      nav(`/lobby?code=${newCode}`)
+  // Ir directo al juego para ver la cuenta regresiva
+  nav(`/game/${newCode}`)
     } catch (err) {
       alert(err?.response?.data?.message || 'No se pudo crear la sala')
     } finally {
