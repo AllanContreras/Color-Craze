@@ -137,7 +137,7 @@ export default function Game(){
         const params = new URLSearchParams(window.location.search)
         const alreadyFull = params.get('full') === '1'
         if (alreadyFull) setUltraMode(true)
-        if (res.data.status === 'PLAYING'){
+  if (res.data.status === 'PLAYING'){
           // activar modo grande en la misma ventana
           setFullMode(true)
           // permitir movimiento inmediato si ya está en juego
@@ -172,6 +172,22 @@ export default function Game(){
           if (res.data.arena){ setArenaMode(true); setArenaConfig(res.data.arena) }
           // Apply theme from GET if present (including WAITING state cases)
           if (res.data.theme){ setArenaTheme(res.data.theme) }
+        } else if (res.data.status === 'WAITING') {
+          // Show arena preview with the chosen theme while waiting
+          if (res.data.theme) setArenaTheme(res.data.theme)
+          setArenaMode(true)
+          setCanMove(false)
+          setArenaConfig({
+            width: 980,
+            height: 540,
+            platforms: [
+              { x: 60, y: 420, width: 280, height: 22, cells: 14 },
+              { x: 360, y: 340, width: 260, height: 22, cells: 13 },
+              { x: 660, y: 260, width: 240, height: 22, cells: 12 },
+              { x: 220, y: 200, width: 200, height: 22, cells: 10 },
+              { x: 520, y: 160, width: 160, height: 22, cells: 8 }
+            ]
+          })
         }
       }catch{}
     }
@@ -226,8 +242,20 @@ export default function Game(){
       }
     } else if (body.status === 'WAITING') {
       setCanMove(false)
-      setArenaMode(false)
-      setArenaConfig(null)
+      // Show preview arena during WAITING
+      setArenaMode(true)
+      if (body.theme) setArenaTheme(body.theme)
+      setArenaConfig(prev => prev && prev.platforms?.length ? prev : {
+        width: 980,
+        height: 540,
+        platforms: [
+          { x: 60, y: 420, width: 280, height: 22, cells: 14 },
+          { x: 360, y: 340, width: 260, height: 22, cells: 13 },
+          { x: 660, y: 260, width: 240, height: 22, cells: 12 },
+          { x: 220, y: 200, width: 200, height: 22, cells: 10 },
+          { x: 520, y: 160, width: 160, height: 22, cells: 8 }
+        ]
+      })
       // limpiar patrón para recalcular en el siguiente tema/partida
       platformPatternRef.current = null
       lastThemeRef.current = null
@@ -258,13 +286,13 @@ export default function Game(){
   // Arena inputs (left/right/jump) handlers
   useEffect(()=>{
     const sendInput = () => {
-      if (!client || !client.connected || !arenaMode) return
+      if (!client || !client.connected || !arenaMode || !canMove) return
       const playerId = localStorage.getItem('cc_userId')
       const { left, right, jump } = inputRef.current
       client.publish({ destination:'/app/arena/input', body: JSON.stringify({ code, playerId, left, right, jump }) })
     }
     const down = (e) => {
-      if (!arenaMode) return
+      if (!arenaMode || !canMove) return
       switch(e.key){
         case 'ArrowLeft': case 'a': case 'A': e.preventDefault(); inputRef.current.left = true; sendInput(); break
         case 'ArrowRight': case 'd': case 'D': e.preventDefault(); inputRef.current.right = true; sendInput(); break
@@ -274,7 +302,7 @@ export default function Game(){
       }
     }
     const up = (e) => {
-      if (!arenaMode) return
+      if (!arenaMode || !canMove) return
       switch(e.key){
         case 'ArrowLeft': case 'a': case 'A': e.preventDefault(); inputRef.current.left = false; sendInput(); break
         case 'ArrowRight': case 'd': case 'D': e.preventDefault(); inputRef.current.right = false; sendInput(); break
@@ -289,11 +317,11 @@ export default function Game(){
       window.removeEventListener('keydown', down)
       window.removeEventListener('keyup', up)
     }
-  },[client, arenaMode, code])
+  },[client, arenaMode, canMove, code])
 
-  // Draw arena on canvas when we have frames
+  // Draw arena on canvas; in WAITING we draw a preview (no frames required)
   useEffect(()=>{
-    if (!arenaMode || !arenaConfig || !arenaFrame) return
+    if (!arenaMode || !arenaConfig) return
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
@@ -627,7 +655,7 @@ export default function Game(){
         ctx.restore()
       }
       // paint cells
-      const paintArr = arenaFrame.paint ? arenaFrame.paint[i] : null
+  const paintArr = arenaFrame && arenaFrame.paint ? arenaFrame.paint[i] : null
       if (paintArr){
         const cellW = pl.width / pl.cells
         const prev = lastPaintRef.current[i] || []
@@ -671,7 +699,7 @@ export default function Game(){
       }
     }
     // draw players
-    const pp = arenaFrame.players || []
+  const pp = arenaFrame && arenaFrame.players ? arenaFrame.players : []
     for (const p of pp){
       const playerMeta = players.find(x=>x.playerId===p.playerId)
       const color = colorToHex(playerMeta?.color || 'PINK')
@@ -816,25 +844,35 @@ export default function Game(){
           {arenaMode ? (
             <>
               <canvas ref={canvasRef} style={{background:'#111827', border:'1px solid #333'}} />
-              {/* Territory HUD */}
-              <div style={{position:'absolute', top:8, left:8, right:8, display:'flex', gap:12, justifyContent:'center', pointerEvents:'none', zIndex:5}}>
-                {players.map(p => {
-                  const colName = (p.color||'').toUpperCase()
-                  const percent = coverageByColor[colName] || 0
-                  const fill = colorToHex(colName)
-                  const emoji = avatarToEmoji(sanitizeAvatar(p.avatar))
-                  const barBg = arenaTheme==='metal' ? '#1f2430' : arenaTheme==='cyber' ? '#0b1020' : '#1a1d22'
-                  return (
-                    <div key={p.playerId} style={{display:'flex', alignItems:'center', gap:8, padding:'6px 10px', borderRadius:16, background:'rgba(0,0,0,0.35)', border:'1px solid rgba(255,255,255,0.15)', boxShadow:'0 2px 6px rgba(0,0,0,0.25)', pointerEvents:'none'}}>
-                      <div style={{width:28,height:28,borderRadius:'50%',background:'#222',border:`2px solid ${fill}`,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:16,lineHeight:'28px',boxShadow:`0 0 6px ${arenaTheme==='cyber'?fill+'66':'#00000055'}`}}>{emoji}</div>
-                      <div style={{width:160, height:16, borderRadius:12, background:barBg, border:'1px solid #333', overflow:'hidden', position:'relative'}}>
-                        <div style={{width:`${percent}%`, height:'100%', background:fill, opacity:0.9}} />
-                        <div style={{position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:12, textShadow:'0 1px 2px #000'}}>{percent}%</div>
+              {/* Territory HUD (show only when playing/movable) */}
+              {canMove && (
+                <div style={{position:'absolute', top:8, left:8, right:8, display:'flex', gap:12, justifyContent:'center', pointerEvents:'none', zIndex:5}}>
+                  {players.map(p => {
+                    const colName = (p.color||'').toUpperCase()
+                    const percent = coverageByColor[colName] || 0
+                    const fill = colorToHex(colName)
+                    const emoji = avatarToEmoji(sanitizeAvatar(p.avatar))
+                    const barBg = arenaTheme==='metal' ? '#1f2430' : arenaTheme==='cyber' ? '#0b1020' : '#1a1d22'
+                    return (
+                      <div key={p.playerId} style={{display:'flex', alignItems:'center', gap:8, padding:'6px 10px', borderRadius:16, background:'rgba(0,0,0,0.35)', border:'1px solid rgba(255,255,255,0.15)', boxShadow:'0 2px 6px rgba(0,0,0,0.25)', pointerEvents:'none'}}>
+                        <div style={{width:28,height:28,borderRadius:'50%',background:'#222',border:`2px solid ${fill}`,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:16,lineHeight:'28px',boxShadow:`0 0 6px ${arenaTheme==='cyber'?fill+'66':'#00000055'}`}}>{emoji}</div>
+                        <div style={{width:160, height:16, borderRadius:12, background:barBg, border:'1px solid #333', overflow:'hidden', position:'relative'}}>
+                          <div style={{width:`${percent}%`, height:'100%', background:fill, opacity:0.9}} />
+                          <div style={{position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:12, textShadow:'0 1px 2px #000'}}>{percent}%</div>
+                        </div>
                       </div>
-                    </div>
-                  )
-                })}
-              </div>
+                    )
+                  })}
+                </div>
+              )}
+              {/* Countdown overlay when waiting */}
+              {!canMove && joinLeft !== null && (
+                <div style={{position:'absolute', bottom:12, left:0, right:0, display:'flex', justifyContent:'center', zIndex:5, pointerEvents:'none'}}>
+                  <div style={{background:'rgba(0,0,0,0.5)', color:'#fff', padding:'8px 12px', borderRadius:8, border:'1px solid rgba(255,255,255,0.2)'}}>
+                    La partida comienza en: {joinLeft}s — Estilo: {arenaTheme || 'aleatorio'}
+                  </div>
+                </div>
+              )}
             </>
           ) : (
             <div className={`grid ${fullMode ? 'large' : ''} ${ultraMode ? 'ultra' : ''}`}>
