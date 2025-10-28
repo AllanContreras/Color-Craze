@@ -136,7 +136,7 @@ export default function Lobby(){
       {/* Color selection removed: colors are assigned automatically by the server */}
       <div style={{marginBottom:12}}>
         <label style={{marginRight:8}}>Personaje:</label>
-        {['ROBOT','COWBOY','ALIEN','COWGIRL'].map(a => (
+        {['ROBOT','COWBOY','ALIEN','WITCH'].map(a => (
           <label key={a} style={{marginRight:8}}>
             <input type="radio" name="avatar" value={a} checked={avatar===a} onChange={()=>setAvatar(a)} /> {a}
           </label>

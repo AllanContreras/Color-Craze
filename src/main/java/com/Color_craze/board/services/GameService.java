@@ -95,7 +95,10 @@ public class GameService {
 
     public GameInfoResponse toDto(GameSession gs) {
         List<GameInfoResponse.PlayerInfo> players = gs.getPlayers().stream()
-            .map(p -> new GameInfoResponse.PlayerInfo(p.playerId, p.nickname, p.color.name(), p.avatar, p.score))
+            .map(p -> {
+                String av = p.avatar == null ? null : sanitizeAvatar(p.avatar);
+                return new GameInfoResponse.PlayerInfo(p.playerId, p.nickname, p.color.name(), av, p.score);
+            })
             .collect(Collectors.toList());
         Long joinDeadlineMs = gs.getJoinDeadline() != null ? gs.getJoinDeadline().toEpochMilli() : null;
         Long startedAtMs = gs.getStartedAt() != null ? gs.getStartedAt().toEpochMilli() : null;
@@ -212,7 +215,7 @@ public class GameService {
                 "playerId", p.playerId,
                 "nickname", p.nickname,
                 "color", p.color.name(),
-                "avatar", p.avatar,
+                "avatar", p.avatar == null ? null : sanitizeAvatar(p.avatar),
                 "score", p.score
             )).collect(Collectors.toList())
         );
@@ -223,8 +226,8 @@ public class GameService {
     private String sanitizeAvatar(String avatar){
         if (avatar == null) return "ROBOT";
         String v = avatar.toUpperCase();
-    if (v.equals("PRINCESS")) return "COWGIRL"; // migrate old value
-    return (v.equals("ROBOT") || v.equals("COWBOY") || v.equals("ALIEN") || v.equals("COWGIRL")) ? v : "ROBOT";
+        if (v.equals("PRINCESS") || v.equals("COWGIRL")) return "WITCH"; // migrate old values
+        return (v.equals("ROBOT") || v.equals("COWBOY") || v.equals("ALIEN") || v.equals("WITCH")) ? v : "ROBOT";
     }
 
     private ColorStatus pickColor(GameSession gs) {
@@ -285,7 +288,7 @@ public class GameService {
                 "playerId", p.playerId,
                 "nickname", p.nickname,
                 "color", p.color.name(),
-                "avatar", p.avatar,
+                "avatar", p.avatar == null ? null : sanitizeAvatar(p.avatar),
                 "score", p.score
             )).collect(Collectors.toList())
         );
@@ -342,7 +345,7 @@ public class GameService {
                 "playerId", p.playerId,
                 "nickname", p.nickname,
                 "color", p.color.name(),
-                "avatar", p.avatar,
+                "avatar", p.avatar == null ? null : sanitizeAvatar(p.avatar),
                 "score", p.score
             )).collect(Collectors.toList())
         );
@@ -370,7 +373,7 @@ public class GameService {
         // publish final standings
         var standings = gs.getPlayers().stream()
             .sorted(Comparator.comparingInt(p -> -p.score))
-            .map(p -> Map.of("playerId", p.playerId, "nickname", p.nickname, "avatar", p.avatar, "score", p.score))
+            .map(p -> Map.of("playerId", p.playerId, "nickname", p.nickname, "avatar", p.avatar == null ? null : sanitizeAvatar(p.avatar), "score", p.score))
             .collect(Collectors.toList());
         messagingTemplate.convertAndSend(String.format("/topic/board/%s/end", code), Map.of("code", code, "standings", standings));
         try { arenaService.stopGame(code); } catch (Exception ignored) {}
@@ -401,7 +404,7 @@ public class GameService {
                 "playerId", p.playerId,
                 "nickname", p.nickname,
                 "color", p.color.name(),
-                "avatar", p.avatar,
+                "avatar", p.avatar == null ? null : sanitizeAvatar(p.avatar),
                 "score", p.score
             )).collect(Collectors.toList())
         );

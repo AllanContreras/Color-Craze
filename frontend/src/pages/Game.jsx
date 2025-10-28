@@ -804,7 +804,7 @@ function avatarToEmoji(name){
     case 'ROBOT': return '🤖'
     case 'COWBOY': return '🤠'
     case 'ALIEN': return '👽'
-    case 'COWGIRL': return '👩‍🌾'
+    case 'WITCH': return '🧙‍♀️'
     default: return '⭐'
   }
 }
@@ -812,8 +812,8 @@ function avatarToEmoji(name){
 // Normalize avatar value to allowed set
 function sanitizeAvatar(name){
   const v = (name||'').toUpperCase()
-  if (v==='PRINCESS') return 'COWGIRL' // transición de antigua princesa a vaquera
-  if (v==='ROBOT' || v==='COWBOY' || v==='ALIEN' || v==='COWGIRL') return v
+  if (v==='PRINCESS' || v==='COWGIRL') return 'WITCH' // migración a la bruja
+  if (v==='ROBOT' || v==='COWBOY' || v==='ALIEN' || v==='WITCH') return v
   return 'ROBOT'
 }
 
@@ -888,28 +888,27 @@ function drawAvatar(ctx, x, y, color, avatar, theme){
       outline()
       break
     }
-    case 'COWGIRL':{
-      // base body
-      drawBase()
-      // hat brim (ligeramente más curvo)
-      ctx.fillStyle = '#8b5a2b'
-      ctx.beginPath();
-      ctx.moveTo(x-2, y+3)
-      ctx.quadraticCurveTo(x+12, y-1, x+26, y+3)
-      ctx.lineTo(x+26, y+6); ctx.lineTo(x-2, y+6); ctx.closePath(); ctx.fill()
-      // hat top con pequeño adorno
-      ctx.fillRect(x+5, y-5, 14, 8)
-      ctx.fillStyle = '#caa472'
-      ctx.fillRect(x+5, y-2, 14, 2)
-      // cabello lateral
-      ctx.fillStyle = '#4a2e12'
-      ctx.fillRect(x+2, y+10, 3, 10)
-      ctx.fillRect(x+19, y+10, 3, 10)
-      // cinturón
-      ctx.fillStyle = '#3b2a1a'
-      ctx.fillRect(x, y+18, 24, 3)
-      ctx.fillStyle = '#d4c28a'; ctx.fillRect(x+10, y+18, 4, 3)
-      outline()
+    case 'WITCH':{
+      // capa/vestido sencillo (triángulo)
+      ctx.fillStyle = color
+      ctx.beginPath()
+      ctx.moveTo(x+12, y+6)
+      ctx.lineTo(x+2, y+32)
+      ctx.lineTo(x+22, y+32)
+      ctx.closePath(); ctx.fill()
+      // sombrero puntiagudo con ala
+      ctx.fillStyle = '#2e2b3f'
+      // ala
+      ctx.fillRect(x-2, y+4, 28, 3)
+      // punta
+      ctx.beginPath(); ctx.moveTo(x+7, y+4); ctx.lineTo(x+12, y-6); ctx.lineTo(x+17, y+4); ctx.closePath(); ctx.fill()
+      // banda del sombrero
+      ctx.fillStyle = '#6b5bd1'; ctx.fillRect(x+7, y+4, 10, 2)
+      // escoba en diagonal (mango + cepillo)
+      ctx.strokeStyle = '#7a5a2b'; ctx.lineWidth = 2
+      ctx.beginPath(); ctx.moveTo(x+18, y+20); ctx.lineTo(x+28, y+30); ctx.stroke()
+      ctx.fillStyle = '#c49a6c'; ctx.beginPath(); ctx.moveTo(x+26, y+28); ctx.lineTo(x+30, y+32); ctx.lineTo(x+24, y+34); ctx.closePath(); ctx.fill()
+      outline('rgba(0,0,0,0.25)')
       break
     }
     default: {
