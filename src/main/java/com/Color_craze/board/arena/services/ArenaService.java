@@ -211,7 +211,10 @@ public class ArenaService {
                             awarded = true; // limit to +1 per tick even if footprint spans multiple new cells
                         }
                         // If there was a previous owner (other color), decrement their score and remove their credit
-                        if (!decremented && prev != null && !prev.equals(newCol) && !decrementedCellsThisTick.contains(key)){
+                        // Extra rule: only allow decrement when the painting player is actually moving horizontally
+                        // to avoid a stationary player "fighting back" every frame and draining the passer's score.
+                        boolean isMovingHorizontally = Math.abs(p.vx) > 1.0;
+                        if (!decremented && prev != null && !prev.equals(newCol) && !decrementedCellsThisTick.contains(key) && isMovingHorizontally){
                             Player2D prevOwner = null;
                             for (Player2D tp : st.players.values()){
                                 if (tp.color.name().equals(prev)) { prevOwner = tp; break; }
