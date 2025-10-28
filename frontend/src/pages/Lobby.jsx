@@ -107,6 +107,12 @@ export default function Lobby(){
       alert(err.response?.data?.message || 'No se pudo unir a la sala')
       return
     }
+    // If a theme was chosen before creating, apply it now as host
+    try{
+      if (theme) {
+        await api.post(`/api/games/${newCode}/theme`, { playerId, theme })
+      }
+    }catch(err){ /* non-blocking */ }
     // Stay in lobby so the host can configure the theme
     nav(`/lobby?code=${newCode}`)
   }
@@ -135,10 +141,12 @@ export default function Lobby(){
   }
 
   const isHost = playersInRoom.length > 0 && playersInRoom[0]?.playerId === playerIdRef.current
+  const inRoom = playersInRoom.length > 0
 
   const applyTheme = async (newTheme) => {
     setTheme(newTheme)
-    if (!code || code.length !== 6) return
+    // If not in a room yet, just persist locally; apply on createGame
+    if (!code || code.length !== 6 || !inRoom) return
     try{
       await api.post(`/api/games/${code}/theme`, { playerId: playerIdRef.current, theme: newTheme })
     }catch(err){
@@ -149,17 +157,19 @@ export default function Lobby(){
   return (
     <div>
       <h3>Lobby</h3>
-      {/* Theme selection (host only) */}
+      {/* Theme selection: before joining/creating it's open for anyone; once inside a room, only the host can change it */}
       <div style={{marginBottom:12}}>
         <label style={{marginRight:8}}>Estilo de la partida:</label>
-        <select value={theme || ''} onChange={(e)=> applyTheme(e.target.value)} disabled={!isHost}>
+        <select value={theme || ''} onChange={(e)=> applyTheme(e.target.value)} disabled={inRoom && !isHost}>
           <option value="" disabled>{theme ? '(seleccionado)' : '(elige uno)'}</option>
           <option value="metal">Metal</option>
           <option value="cyber">Cyberpunk</option>
           <option value="moon">Luna</option>
         </select>
-        {!isHost && (
+        {inRoom && !isHost ? (
           <span style={{marginLeft:8, color:'#666'}}>(El creador elige el estilo)</span>
+        ) : (
+          <span style={{marginLeft:8, color:'#666'}}>(Puedes elegir antes de crear la sala)</span>
         )}
       </div>
       {/* Color selection removed: colors are assigned automatically by the server */}
