@@ -842,72 +842,103 @@ function drawAvatar(ctx, x, y, color, avatar, theme){
   switch(avatar){
     case 'ROBOT':{
       glow()
-      drawBase()
+      // cuerpo
+      ctx.fillStyle = color; ctx.fillRect(x, y, 24, 24)
+      // cabeza
+      ctx.fillStyle = '#cbd5e1'; ctx.fillRect(x+4, y-8, 16, 10)
       // antena
-      ctx.strokeStyle = '#ddd'
-      ctx.lineWidth = 2
-      ctx.beginPath(); ctx.moveTo(x+12, y-3); ctx.lineTo(x+12, y+4); ctx.stroke()
-      ctx.fillStyle = '#f44'; ctx.beginPath(); ctx.arc(x+12, y-5, 2, 0, Math.PI*2); ctx.fill()
+      ctx.strokeStyle = '#ddd'; ctx.lineWidth = 2
+      ctx.beginPath(); ctx.moveTo(x+12, y-10); ctx.lineTo(x+12, y-8); ctx.stroke()
+      ctx.fillStyle = '#f44'; ctx.beginPath(); ctx.arc(x+12, y-12, 2, 0, Math.PI*2); ctx.fill()
+      // visor ojos
+      ctx.fillStyle = '#111'; ctx.fillRect(x+6, y-4, 12, 5)
+      ctx.fillStyle = '#0ef'; ctx.fillRect(x+7, y-3, 3, 3); ctx.fillRect(x+14, y-3, 3, 3)
+      // brazos
+      ctx.fillStyle = '#9ca3af'; ctx.fillRect(x-3, y+6, 6, 6); ctx.fillRect(x+21, y+6, 6, 6)
       // panel pecho
-      ctx.fillStyle = '#333'; ctx.fillRect(x+6, y+18, 12, 6)
-      ctx.fillStyle = '#0ff'; ctx.fillRect(x+7, y+19, 4, 4)
-      ctx.fillStyle = '#ff0'; ctx.fillRect(x+13, y+19, 4, 4)
-      // ojos visor
-      ctx.fillStyle = '#111'; ctx.fillRect(x+6, y+10, 12, 5)
-      ctx.fillStyle = '#0ef'; ctx.fillRect(x+7, y+11, 3, 3); ctx.fillRect(x+14, y+11, 3, 3)
+      ctx.fillStyle = '#333'; ctx.fillRect(x+6, y+14, 12, 6)
+      ctx.fillStyle = '#0ff'; ctx.fillRect(x+7, y+15, 4, 4)
+      ctx.fillStyle = '#ff0'; ctx.fillRect(x+13, y+15, 4, 4)
+      // rejilla inferior
+      ctx.strokeStyle = '#222'; ctx.lineWidth = 1
+      ctx.beginPath(); ctx.moveTo(x+4, y+22); ctx.lineTo(x+20, y+22); ctx.moveTo(x+4, y+24); ctx.lineTo(x+20, y+24); ctx.stroke()
+      // piernas
+      ctx.fillStyle = '#9ca3af'; ctx.fillRect(x+4, y+24, 6, 8); ctx.fillRect(x+14, y+24, 6, 8)
       outline()
       break
     }
     case 'COWBOY':{
-      drawBase()
-      // ala sombrero
+      // torso
+      ctx.fillStyle = color; ctx.fillRect(x, y, 24, 28)
+      // sombrero ala
       ctx.fillStyle = '#8b5a2b'
-      ctx.beginPath(); ctx.moveTo(x-2, y+2); ctx.lineTo(x+26, y+2); ctx.lineTo(x+26, y+6); ctx.lineTo(x-2, y+6); ctx.closePath(); ctx.fill()
+      ctx.fillRect(x-2, y-2, 28, 3)
       // copa
-      ctx.fillRect(x+4, y-6, 16, 8)
+      ctx.fillRect(x+4, y-10, 16, 8)
+      // banda sombrero
+      ctx.fillStyle = '#caa472'; ctx.fillRect(x+6, y-7, 12, 2)
       // pañuelo
-      ctx.fillStyle = '#b21e2a'; ctx.beginPath(); ctx.moveTo(x+10, y+14); ctx.lineTo(x+14, y+14); ctx.lineTo(x+12, y+18); ctx.closePath(); ctx.fill()
-      // cinturón
+      ctx.fillStyle = '#b21e2a'; ctx.beginPath(); ctx.moveTo(x+10, y+8); ctx.lineTo(x+14, y+8); ctx.lineTo(x+12, y+12); ctx.closePath(); ctx.fill()
+      // estrella sheriff (dos triángulos)
+      ctx.fillStyle = '#d4c28a';
+      ctx.beginPath(); ctx.moveTo(x+12, y+14); ctx.lineTo(x+9, y+18); ctx.lineTo(x+15, y+18); ctx.closePath(); ctx.fill()
+      ctx.beginPath(); ctx.moveTo(x+12, y+20); ctx.lineTo(x+9, y+16); ctx.lineTo(x+15, y+16); ctx.closePath(); ctx.fill()
+      // cinturón y hebilla
       ctx.fillStyle = '#3b2a1a'; ctx.fillRect(x, y+18, 24, 3)
       ctx.fillStyle = '#d4c28a'; ctx.fillRect(x+10, y+18, 4, 3)
+      // botas (bordes inferiores)
+      ctx.fillStyle = '#3b2a1a'; ctx.fillRect(x+2, y+26, 7, 2); ctx.fillRect(x+15, y+26, 7, 2)
+      // funda lateral
+      ctx.fillStyle = '#5b3a1a'; ctx.fillRect(x-3, y+16, 3, 8)
       outline()
       break
     }
     case 'ALIEN':{
-      // cuerpo
-      drawBase()
+      // torso
+      ctx.fillStyle = color; ctx.fillRect(x+2, y+6, 20, 22)
       // cabeza ovalada
-      ctx.save(); ctx.fillStyle = color; ctx.beginPath(); ctx.ellipse(x+12, y+7, 10, 7, 0, 0, Math.PI*2); ctx.fill(); ctx.restore()
-      // ojos
-      ctx.fillStyle = '#000'; ctx.beginPath(); ctx.ellipse(x+8, y+7, 3, 4, 0, 0, Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.ellipse(x+16, y+7, 3, 4, 0, 0, Math.PI*2); ctx.fill()
+      ctx.save(); ctx.fillStyle = color; ctx.beginPath(); ctx.ellipse(x+12, y, 10, 7, 0, 0, Math.PI*2); ctx.fill(); ctx.restore()
+      // ojos y boca
+      ctx.fillStyle = '#000'; ctx.beginPath(); ctx.ellipse(x+8, y, 3, 4, 0, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(x+16, y, 3, 4, 0, 0, Math.PI*2); ctx.fill()
+      ctx.fillRect(x+10, y+5, 4, 1)
       // antenitas
       ctx.strokeStyle = '#333'; ctx.lineWidth = 1
-      ctx.beginPath(); ctx.moveTo(x+6, y-1); ctx.lineTo(x+8, y+2); ctx.moveTo(x+18, y-1); ctx.lineTo(x+16, y+2); ctx.stroke()
-      ctx.fillStyle = '#0f0'; ctx.beginPath(); ctx.arc(x+6, y-2, 1.5, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(x+18, y-2, 1.5, 0, Math.PI*2); ctx.fill()
+      ctx.beginPath(); ctx.moveTo(x+6, y-6); ctx.lineTo(x+8, y-2); ctx.moveTo(x+18, y-6); ctx.lineTo(x+16, y-2); ctx.stroke()
+      ctx.fillStyle = '#0f0'; ctx.beginPath(); ctx.arc(x+6, y-7, 1.5, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(x+18, y-7, 1.5, 0, Math.PI*2); ctx.fill()
+      // manos
+      ctx.fillStyle = color; ctx.fillRect(x-2, y+12, 6, 5); ctx.fillRect(x+20, y+12, 6, 5)
+      // vientre oval
+      ctx.fillStyle = 'rgba(255,255,255,0.2)'; ctx.beginPath(); ctx.ellipse(x+12, y+16, 7, 5, 0, 0, Math.PI*2); ctx.fill()
       outline()
       break
     }
     case 'WITCH':{
-      // capa/vestido sencillo (triángulo)
-      ctx.fillStyle = color
-      ctx.beginPath()
-      ctx.moveTo(x+12, y+6)
-      ctx.lineTo(x+2, y+32)
-      ctx.lineTo(x+22, y+32)
-      ctx.closePath(); ctx.fill()
+      // cabeza
+      ctx.fillStyle = '#f1d0b7'; ctx.beginPath(); ctx.arc(x+12, y, 5, 0, Math.PI*2); ctx.fill()
+      // cabello lateral
+      ctx.fillStyle = '#2a1b12'; ctx.fillRect(x+4, y+2, 3, 8); ctx.fillRect(x+17, y+2, 3, 8)
       // sombrero puntiagudo con ala
       ctx.fillStyle = '#2e2b3f'
-      // ala
-      ctx.fillRect(x-2, y+4, 28, 3)
-      // punta
-      ctx.beginPath(); ctx.moveTo(x+7, y+4); ctx.lineTo(x+12, y-6); ctx.lineTo(x+17, y+4); ctx.closePath(); ctx.fill()
+      ctx.fillRect(x-2, y-4, 28, 3) // ala
+      ctx.beginPath(); ctx.moveTo(x+7, y-4); ctx.lineTo(x+12, y-14); ctx.lineTo(x+17, y-4); ctx.closePath(); ctx.fill() // punta
       // banda del sombrero
-      ctx.fillStyle = '#6b5bd1'; ctx.fillRect(x+7, y+4, 10, 2)
-      // escoba en diagonal (mango + cepillo)
+      ctx.fillStyle = '#6b5bd1'; ctx.fillRect(x+7, y-3, 10, 2)
+      // cuerpo/vestido
+      ctx.fillStyle = color
+      ctx.beginPath(); ctx.moveTo(x+12, y+6); ctx.lineTo(x+2, y+28); ctx.lineTo(x+22, y+28); ctx.closePath(); ctx.fill()
+      // mangas
+      ctx.beginPath(); ctx.moveTo(x+2, y+14); ctx.lineTo(x+8, y+12); ctx.lineTo(x+8, y+18); ctx.closePath(); ctx.fill()
+      ctx.beginPath(); ctx.moveTo(x+22, y+14); ctx.lineTo(x+16, y+12); ctx.lineTo(x+16, y+18); ctx.closePath(); ctx.fill()
+      // cinturón
+      ctx.fillStyle = '#3b2a1a'; ctx.fillRect(x+4, y+18, 16, 2)
+      ctx.fillStyle = '#d4c28a'; ctx.fillRect(x+11, y+18, 2, 2)
+      // escoba en diagonal (mango + cerdas)
       ctx.strokeStyle = '#7a5a2b'; ctx.lineWidth = 2
-      ctx.beginPath(); ctx.moveTo(x+18, y+20); ctx.lineTo(x+28, y+30); ctx.stroke()
-      ctx.fillStyle = '#c49a6c'; ctx.beginPath(); ctx.moveTo(x+26, y+28); ctx.lineTo(x+30, y+32); ctx.lineTo(x+24, y+34); ctx.closePath(); ctx.fill()
+      ctx.beginPath(); ctx.moveTo(x+18, y+18); ctx.lineTo(x+30, y+30); ctx.stroke()
+      ctx.fillStyle = '#c49a6c';
+      ctx.beginPath(); ctx.moveTo(x+28, y+28); ctx.lineTo(x+33, y+31); ctx.lineTo(x+27, y+33); ctx.closePath(); ctx.fill()
+      ctx.beginPath(); ctx.moveTo(x+26, y+30); ctx.lineTo(x+31, y+33); ctx.lineTo(x+25, y+35); ctx.closePath(); ctx.fill()
       outline('rgba(0,0,0,0.25)')
       break
     }
