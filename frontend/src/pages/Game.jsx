@@ -912,6 +912,8 @@ function drawAvatar(ctx, x, y, color, avatar, theme){
       break
     }
     case 'ALIEN':{
+      // mochila dorsal (detrás del torso)
+      ctx.fillStyle = '#243b4a'; ctx.fillRect(x+3, y+8, 18, 5)
       // torso
       ctx.fillStyle = color; ctx.fillRect(x+2, y+6, 20, 22)
       // cabeza ovalada
@@ -919,15 +921,27 @@ function drawAvatar(ctx, x, y, color, avatar, theme){
       // ojos y boca
       ctx.fillStyle = '#000'; ctx.beginPath(); ctx.ellipse(x+8, y, 3, 4, 0, 0, Math.PI*2); ctx.fill();
       ctx.beginPath(); ctx.ellipse(x+16, y, 3, 4, 0, 0, Math.PI*2); ctx.fill()
-      ctx.fillRect(x+10, y+5, 4, 1)
+      // brillo de ojos
+      ctx.fillStyle = '#fff'; ctx.fillRect(x+7, y-2, 1, 1); ctx.fillRect(x+15, y-2, 1, 1)
+      ctx.fillStyle = '#000'; ctx.fillRect(x+10, y+5, 4, 1)
       // antenitas
       ctx.strokeStyle = '#333'; ctx.lineWidth = 1
       ctx.beginPath(); ctx.moveTo(x+6, y-6); ctx.lineTo(x+8, y-2); ctx.moveTo(x+18, y-6); ctx.lineTo(x+16, y-2); ctx.stroke()
       ctx.fillStyle = '#0f0'; ctx.beginPath(); ctx.arc(x+6, y-7, 1.5, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(x+18, y-7, 1.5, 0, Math.PI*2); ctx.fill()
+      // hombreras
+      ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fillRect(x+1, y+8, 6, 3); ctx.fillRect(x+17, y+8, 6, 3)
       // manos
       ctx.fillStyle = color; ctx.fillRect(x-2, y+12, 6, 5); ctx.fillRect(x+20, y+12, 6, 5)
+      // franjas pecho
+      ctx.strokeStyle = 'rgba(0,0,0,0.2)'; ctx.lineWidth = 1
+      ctx.beginPath(); ctx.moveTo(x+5, y+14); ctx.lineTo(x+19, y+14); ctx.moveTo(x+5, y+17); ctx.lineTo(x+19, y+17); ctx.moveTo(x+5, y+20); ctx.lineTo(x+19, y+20); ctx.stroke()
+      // cinturón
+      ctx.fillStyle = '#2e2e2e'; ctx.fillRect(x+4, y+20, 16, 2)
+      ctx.fillStyle = '#d4d4d8'; ctx.fillRect(x+11, y+20, 2, 2)
       // vientre oval
       ctx.fillStyle = 'rgba(255,255,255,0.2)'; ctx.beginPath(); ctx.ellipse(x+12, y+16, 7, 5, 0, 0, Math.PI*2); ctx.fill()
+      // pies
+      ctx.fillStyle = '#2e2e2e'; ctx.fillRect(x+4, y+28, 6, 2); ctx.fillRect(x+14, y+28, 6, 2)
       outline()
       break
     }
