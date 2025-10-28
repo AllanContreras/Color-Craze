@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import api from '../api'
 import { createStompClient } from '../ws'
 
 export default function Lobby(){
   const nav = useNavigate()
+  const location = useLocation()
   const [code, setCode] = useState('')
   // Color is no longer selectable; it will be auto-assigned by the server
   const [color] = useState('')
@@ -17,12 +18,12 @@ export default function Lobby(){
   const stompRef = useRef(null)
   const playerIdRef = useRef(localStorage.getItem('cc_userId') || '')
 
-  // Prefill code from query param if present
+  // Reflect ?code=... from URL into local state; update on navigation
   useEffect(()=>{
-    const params = new URLSearchParams(window.location.search)
+    const params = new URLSearchParams(location.search)
     const c = params.get('code')
     if (c && c.length === 6) setCode(c.toUpperCase())
-  },[])
+  },[location.search])
 
   // Cuando el código tiene 6 caracteres, consultar la sala para saber colores ocupados y deadline
   useEffect(()=>{
@@ -98,6 +99,7 @@ export default function Lobby(){
   const createGame = async () => {
   const res = await api.post('/api/games')
     const newCode = res.data.code
+    setCode(newCode)
     // auto-join; color will be assigned by server
     const playerId = localStorage.getItem('cc_userId')
     const nickname = localStorage.getItem('cc_nickname')
