@@ -868,7 +868,7 @@ function drawAvatar(ctx, x, y, color, avatar, theme){
       break
     }
     case 'COWBOY':{
-      // torso
+      // torso base
       ctx.fillStyle = color; ctx.fillRect(x, y, 24, 28)
       // sombrero ala
       ctx.fillStyle = '#8b5a2b'
@@ -877,19 +877,37 @@ function drawAvatar(ctx, x, y, color, avatar, theme){
       ctx.fillRect(x+4, y-10, 16, 8)
       // banda sombrero
       ctx.fillStyle = '#caa472'; ctx.fillRect(x+6, y-7, 12, 2)
-      // pañuelo
+      // rostro
+      ctx.fillStyle = '#f1d0b7'; ctx.fillRect(x+5, y-2, 14, 6)
+      // bigote
+      ctx.fillStyle = '#3b2a1a'
+      ctx.beginPath(); ctx.moveTo(x+9, y+2); ctx.lineTo(x+12, y+3); ctx.lineTo(x+9, y+4); ctx.closePath(); ctx.fill()
+      ctx.beginPath(); ctx.moveTo(x+15, y+2); ctx.lineTo(x+12, y+3); ctx.lineTo(x+15, y+4); ctx.closePath(); ctx.fill()
+      // chaleco (dos triángulos formando una V)
+      ctx.fillStyle = '#5b3a1a'
+      ctx.beginPath(); ctx.moveTo(x, y+2); ctx.lineTo(x+12, y+12); ctx.lineTo(x, y+22); ctx.closePath(); ctx.fill()
+      ctx.beginPath(); ctx.moveTo(x+24, y+2); ctx.lineTo(x+12, y+12); ctx.lineTo(x+24, y+22); ctx.closePath(); ctx.fill()
+      // pañuelo (encima del chaleco)
       ctx.fillStyle = '#b21e2a'; ctx.beginPath(); ctx.moveTo(x+10, y+8); ctx.lineTo(x+14, y+8); ctx.lineTo(x+12, y+12); ctx.closePath(); ctx.fill()
+      // botones de camisa
+      ctx.fillStyle = '#eee'; ctx.fillRect(x+11, y+12, 2, 2); ctx.fillRect(x+11, y+16, 2, 2)
       // estrella sheriff (dos triángulos)
       ctx.fillStyle = '#d4c28a';
       ctx.beginPath(); ctx.moveTo(x+12, y+14); ctx.lineTo(x+9, y+18); ctx.lineTo(x+15, y+18); ctx.closePath(); ctx.fill()
       ctx.beginPath(); ctx.moveTo(x+12, y+20); ctx.lineTo(x+9, y+16); ctx.lineTo(x+15, y+16); ctx.closePath(); ctx.fill()
       // cinturón y hebilla
       ctx.fillStyle = '#3b2a1a'; ctx.fillRect(x, y+18, 24, 3)
-      ctx.fillStyle = '#d4c28a'; ctx.fillRect(x+10, y+18, 4, 3)
+      ctx.fillStyle = '#d4c28a'; ctx.fillRect(x+9, y+18, 6, 4)
+      ctx.fillStyle = '#3b2a1a'; ctx.fillRect(x+11, y+19, 2, 2)
       // botas (bordes inferiores)
       ctx.fillStyle = '#3b2a1a'; ctx.fillRect(x+2, y+26, 7, 2); ctx.fillRect(x+15, y+26, 7, 2)
+      // espuelas
+      ctx.fillStyle = '#d4c28a'; ctx.fillRect(x+1, y+27, 2, 2); ctx.fillRect(x+21, y+27, 2, 2)
       // funda lateral
       ctx.fillStyle = '#5b3a1a'; ctx.fillRect(x-3, y+16, 3, 8)
+      // lazo (rollo)
+      ctx.strokeStyle = '#caa472'; ctx.lineWidth = 2
+      ctx.beginPath(); ctx.arc(x+22, y+10, 4, 0, Math.PI*2); ctx.stroke()
       outline()
       break
     }
