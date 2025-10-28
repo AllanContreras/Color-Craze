@@ -111,6 +111,8 @@ public class ArenaService {
     List<Player2D> plist = new ArrayList<>(st.players.values());
     final long nowMs = System.currentTimeMillis();
     final long awardIntervalMs = 150; // ~6-7 points per second maximum
+        // Track which cells have already caused a decrement this tick to avoid mutual double-decrement
+        java.util.Set<Long> decrementedCellsThisTick = new java.util.HashSet<>();
         for (Player2D p : plist){
             InputState in = inputs.get(code+"|"+p.playerId);
             double ax = 0;
@@ -209,7 +211,7 @@ public class ArenaService {
                             awarded = true; // limit to +1 per tick even if footprint spans multiple new cells
                         }
                         // If there was a previous owner (other color), decrement their score and remove their credit
-                        if (!decremented && prev != null && !prev.equals(newCol)){
+                        if (!decremented && prev != null && !prev.equals(newCol) && !decrementedCellsThisTick.contains(key)){
                             Player2D prevOwner = null;
                             for (Player2D tp : st.players.values()){
                                 if (tp.color.name().equals(prev)) { prevOwner = tp; break; }
@@ -218,6 +220,7 @@ public class ArenaService {
                                 prevOwner.score -= 1;
                                 java.util.Set<Long> prevSet = st.creditedByPlayer.get(prevOwner.playerId);
                                 if (prevSet != null) prevSet.remove(key);
+                                decrementedCellsThisTick.add(key); // ensure only one decrement for this cell in this tick
                                 decremented = true; // limit to -1 per tick to balance the +1 cap
                             }
                         }
