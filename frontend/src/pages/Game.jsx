@@ -803,8 +803,8 @@ function avatarToEmoji(name){
   switch((name||'').toUpperCase()){
     case 'ROBOT': return '🤖'
     case 'COWBOY': return '🤠'
-    case 'ALIEN': return '�'
-    case 'PRINCESS': return '�'
+    case 'ALIEN': return '👽'
+    case 'COWGIRL': return '👩‍🌾'
     default: return '⭐'
   }
 }
@@ -812,7 +812,8 @@ function avatarToEmoji(name){
 // Normalize avatar value to allowed set
 function sanitizeAvatar(name){
   const v = (name||'').toUpperCase()
-  if (v==='ROBOT' || v==='COWBOY' || v==='ALIEN' || v==='PRINCESS') return v
+  if (v==='PRINCESS') return 'COWGIRL' // transición de antigua princesa a vaquera
+  if (v==='ROBOT' || v==='COWBOY' || v==='ALIEN' || v==='COWGIRL') return v
   return 'ROBOT'
 }
 
@@ -842,54 +843,73 @@ function drawAvatar(ctx, x, y, color, avatar, theme){
     case 'ROBOT':{
       glow()
       drawBase()
-      // antenna
+      // antena
       ctx.strokeStyle = '#ddd'
       ctx.lineWidth = 2
       ctx.beginPath(); ctx.moveTo(x+12, y-3); ctx.lineTo(x+12, y+4); ctx.stroke()
       ctx.fillStyle = '#f44'; ctx.beginPath(); ctx.arc(x+12, y-5, 2, 0, Math.PI*2); ctx.fill()
-      // eyes
-      ctx.fillStyle = '#111'; ctx.fillRect(x+6, y+10, 4, 4); ctx.fillRect(x+14, y+10, 4, 4)
+      // panel pecho
+      ctx.fillStyle = '#333'; ctx.fillRect(x+6, y+18, 12, 6)
+      ctx.fillStyle = '#0ff'; ctx.fillRect(x+7, y+19, 4, 4)
+      ctx.fillStyle = '#ff0'; ctx.fillRect(x+13, y+19, 4, 4)
+      // ojos visor
+      ctx.fillStyle = '#111'; ctx.fillRect(x+6, y+10, 12, 5)
+      ctx.fillStyle = '#0ef'; ctx.fillRect(x+7, y+11, 3, 3); ctx.fillRect(x+14, y+11, 3, 3)
       outline()
       break
     }
     case 'COWBOY':{
       drawBase()
-      // hat brim
+      // ala sombrero
       ctx.fillStyle = '#8b5a2b'
-      ctx.fillRect(x-2, y+2, 28, 4)
-      // hat top
+      ctx.beginPath(); ctx.moveTo(x-2, y+2); ctx.lineTo(x+26, y+2); ctx.lineTo(x+26, y+6); ctx.lineTo(x-2, y+6); ctx.closePath(); ctx.fill()
+      // copa
       ctx.fillRect(x+4, y-6, 16, 8)
+      // pañuelo
+      ctx.fillStyle = '#b21e2a'; ctx.beginPath(); ctx.moveTo(x+10, y+14); ctx.lineTo(x+14, y+14); ctx.lineTo(x+12, y+18); ctx.closePath(); ctx.fill()
+      // cinturón
+      ctx.fillStyle = '#3b2a1a'; ctx.fillRect(x, y+18, 24, 3)
+      ctx.fillStyle = '#d4c28a'; ctx.fillRect(x+10, y+18, 4, 3)
       outline()
       break
     }
     case 'ALIEN':{
-      // body
+      // cuerpo
       drawBase()
-      // oval head
-      ctx.save()
-      ctx.fillStyle = color
-      ctx.beginPath()
-      ctx.ellipse(x+12, y+8, 10, 8, 0, 0, Math.PI*2)
-      ctx.fill()
-      ctx.restore()
-      // eyes
-      ctx.fillStyle = '#000'; ctx.beginPath(); ctx.ellipse(x+8, y+8, 3, 4, 0, 0, Math.PI*2); ctx.fill()
-      ctx.beginPath(); ctx.ellipse(x+16, y+8, 3, 4, 0, 0, Math.PI*2); ctx.fill()
+      // cabeza ovalada
+      ctx.save(); ctx.fillStyle = color; ctx.beginPath(); ctx.ellipse(x+12, y+7, 10, 7, 0, 0, Math.PI*2); ctx.fill(); ctx.restore()
+      // ojos
+      ctx.fillStyle = '#000'; ctx.beginPath(); ctx.ellipse(x+8, y+7, 3, 4, 0, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(x+16, y+7, 3, 4, 0, 0, Math.PI*2); ctx.fill()
+      // antenitas
+      ctx.strokeStyle = '#333'; ctx.lineWidth = 1
+      ctx.beginPath(); ctx.moveTo(x+6, y-1); ctx.lineTo(x+8, y+2); ctx.moveTo(x+18, y-1); ctx.lineTo(x+16, y+2); ctx.stroke()
+      ctx.fillStyle = '#0f0'; ctx.beginPath(); ctx.arc(x+6, y-2, 1.5, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(x+18, y-2, 1.5, 0, Math.PI*2); ctx.fill()
       outline()
       break
     }
-    case 'PRINCESS':{
-      // dress (triangle)
-      ctx.fillStyle = color
-      ctx.beginPath()
-      ctx.moveTo(x+12, y+6)
-      ctx.lineTo(x+2, y+32)
-      ctx.lineTo(x+22, y+32)
-      ctx.closePath(); ctx.fill()
-      // crown
-      ctx.fillStyle = '#ffd700'
-      ctx.beginPath(); ctx.moveTo(x+7, y-2); ctx.lineTo(x+12, y-8); ctx.lineTo(x+17, y-2); ctx.closePath(); ctx.fill()
-      outline('rgba(0,0,0,0.25)')
+    case 'COWGIRL':{
+      // base body
+      drawBase()
+      // hat brim (ligeramente más curvo)
+      ctx.fillStyle = '#8b5a2b'
+      ctx.beginPath();
+      ctx.moveTo(x-2, y+3)
+      ctx.quadraticCurveTo(x+12, y-1, x+26, y+3)
+      ctx.lineTo(x+26, y+6); ctx.lineTo(x-2, y+6); ctx.closePath(); ctx.fill()
+      // hat top con pequeño adorno
+      ctx.fillRect(x+5, y-5, 14, 8)
+      ctx.fillStyle = '#caa472'
+      ctx.fillRect(x+5, y-2, 14, 2)
+      // cabello lateral
+      ctx.fillStyle = '#4a2e12'
+      ctx.fillRect(x+2, y+10, 3, 10)
+      ctx.fillRect(x+19, y+10, 3, 10)
+      // cinturón
+      ctx.fillStyle = '#3b2a1a'
+      ctx.fillRect(x, y+18, 24, 3)
+      ctx.fillStyle = '#d4c28a'; ctx.fillRect(x+10, y+18, 4, 3)
+      outline()
       break
     }
     default: {

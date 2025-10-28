@@ -223,7 +223,8 @@ public class GameService {
     private String sanitizeAvatar(String avatar){
         if (avatar == null) return "ROBOT";
         String v = avatar.toUpperCase();
-        return (v.equals("ROBOT") || v.equals("COWBOY") || v.equals("ALIEN") || v.equals("PRINCESS")) ? v : "ROBOT";
+    if (v.equals("PRINCESS")) return "COWGIRL"; // migrate old value
+    return (v.equals("ROBOT") || v.equals("COWBOY") || v.equals("ALIEN") || v.equals("COWGIRL")) ? v : "ROBOT";
     }
 
     private ColorStatus pickColor(GameSession gs) {
