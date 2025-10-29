@@ -234,6 +234,7 @@ export default function Game(){
       // activar modo grande en la misma ventana (no abrir nueva ventana)
       setFullMode(true)
       setCanMove(true)
+      try { localStorage.setItem('cc_isPlaying', 'true') } catch {}
       // Forzar arena mode en PLAYING; si no viene config aún, usa un fallback
       setArenaMode(true)
       if (body.arena){
@@ -252,6 +253,7 @@ export default function Game(){
       }
     } else if (body.status === 'WAITING') {
       setCanMove(false)
+      try { localStorage.removeItem('cc_isPlaying') } catch {}
       // Show preview arena during WAITING
       setArenaMode(true)
       if (body.theme) setArenaTheme(body.theme)
@@ -788,6 +790,7 @@ export default function Game(){
     setMessages(msgs => [...msgs, {t:'end', body}])
     if (timerRef.current) clearInterval(timerRef.current)
     setTimeLeft(0)
+    try { localStorage.removeItem('cc_isPlaying') } catch {}
     if (body.platforms) applyPlatforms(body.platforms)
     if (body.players) setPlayers(body.players)
     if (body.standings) setEndStandings(body.standings)

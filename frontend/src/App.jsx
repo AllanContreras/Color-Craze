@@ -11,10 +11,17 @@ export default function App(){
   const nav = useNavigate()
   const showLogout = location.pathname !== '/' && location.pathname !== '/register'
   const logout = () => {
+    const inGame = (()=>{ try { return localStorage.getItem('cc_isPlaying') === 'true' } catch { return false } })()
+    // Solo pedir confirmación cuando estamos jugando en la arena
+    if (inGame && location.pathname.startsWith('/game/')){
+      const ok = window.confirm('¿Seguro que quieres abandonar la partida?')
+      if (!ok) return
+    }
     try{
       localStorage.removeItem('cc_token')
       localStorage.removeItem('cc_userId')
       localStorage.removeItem('cc_nickname')
+      localStorage.removeItem('cc_isPlaying')
     }catch{}
     nav('/')
   }
