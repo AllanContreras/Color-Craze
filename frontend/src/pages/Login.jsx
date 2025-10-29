@@ -35,8 +35,9 @@ export default function Login(){
   }
 
   return (
-    <div className="page-section">
-      <div className="card card-lg form-narrow compact-inputs">
+    <div className="login-bg">
+      <div className="page-section">
+        <div className="card card-lg form-narrow compact-inputs">
         <header style={{marginBottom:12}}>
           <h2 style={{margin:0}}>Color Craze</h2>
         </header>
@@ -69,6 +70,7 @@ export default function Login(){
           </div>
         </div>
         {error && <div className="error" style={{marginTop:8}}>{error}</div>}
+        </div>
       </div>
     </div>
   )
