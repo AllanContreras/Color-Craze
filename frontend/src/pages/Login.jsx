@@ -34,23 +34,38 @@ export default function Login(){
   }
 
   return (
-    <div>
-      <h3>Login</h3>
-      <form onSubmit={submit}>
-        <div><input placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} /></div>
-        <div><input placeholder="Contraseña" type="password" value={password} onChange={e=>setPassword(e.target.value)} /></div>
-        <div style={{marginTop:8}}>
-          <button type="submit" disabled={loading}>Entrar</button>
+    <div className="page-section">
+      <div className="card card-lg">
+        <header style={{marginBottom:12}}>
+          <h2 style={{margin:0}}>Color Craze</h2>
+        </header>
+        <h3 style={{marginTop:0}}>Iniciar sesión</h3>
+        <form onSubmit={submit} className="form-grid">
+          <div className="form-row">
+            <label className="form-label">Email</label>
+            <input placeholder="tucorreo@ejemplo.com" value={email} onChange={e=>setEmail(e.target.value)} />
+          </div>
+          <div className="form-row">
+            <label className="form-label">Contraseña</label>
+            <input placeholder="••••••••" type="password" value={password} onChange={e=>setPassword(e.target.value)} />
+          </div>
+          <div className="form-actions">
+            <button type="submit" disabled={loading}>Entrar</button>
+            <span className="muted">o <a href="/register">registrarse</a></span>
+          </div>
+        </form>
+        <hr style={{margin:"14px 0", borderColor:"rgba(255,255,255,0.08)"}}/>
+        <div className="form-grid">
+          <div className="form-row">
+            <label className="form-label">Nombre de jugador (invitado)</label>
+            <input placeholder="Tu nick" value={guestNick} onChange={e=>setGuestNick(e.target.value)} />
+          </div>
+          <div className="form-actions">
+            <button onClick={guest} disabled={loading}>Entrar como invitado</button>
+          </div>
         </div>
-      </form>
-      <div style={{marginTop:12}}>
-        <div style={{marginBottom:8}}>
-          <input placeholder="Nombre de jugador (invitado)" value={guestNick} onChange={e=>setGuestNick(e.target.value)} />
-        </div>
-        <button onClick={guest} disabled={loading}>Entrar como invitado</button>
-        <p style={{marginTop:8}}>o <a href="/register">registrarse</a></p>
+        {error && <div style={{color:'salmon', marginTop:8}}>{error}</div>}
       </div>
-      {error && <div style={{color:'salmon', marginTop:8}}>{error}</div>}
     </div>
   )
 }

@@ -160,44 +160,60 @@ export default function Lobby(){
   // Theme is now server-random; no manual apply needed
 
   return (
-    <div>
-      <h3>Lobby</h3>
+    <div className="page-section">
+      <div className="card card-lg">
+      <h3 style={{marginTop:0}}>Lobby</h3>
       {/* Theme display: server chooses randomly; show selected theme when available */}
-      <div style={{marginBottom:12}}>
-        <label style={{marginRight:8}}>Estilo:</label>
-        <span style={{fontWeight:600}}>{theme || 'aleatorio (servidor)'}</span>
+      <div className="form-row" style={{marginBottom:8}}>
+        <label className="form-label">Estilo</label>
+        <div><strong>{theme || 'aleatorio (servidor)'}</strong></div>
       </div>
       {/* Color selection removed: colors are assigned automatically by the server */}
-      <div style={{marginBottom:12}}>
-        <label style={{marginRight:8}}>Personaje:</label>
-        {['ROBOT','COWBOY','ALIEN','WITCH'].map(a => (
-          <label key={a} style={{marginRight:8}}>
-            <input type="radio" name="avatar" value={a} checked={avatar===a} onChange={()=>setAvatar(a)} /> {a}
-          </label>
-        ))}
+      <div className="form-row" style={{marginBottom:8}}>
+        <label className="form-label">Personaje</label>
+        <div className="radio-pills">
+          {['ROBOT','COWBOY','ALIEN','WITCH'].map(a => (
+            <label key={a} className="radio-pill">
+              <input type="radio" name="avatar" value={a} checked={avatar===a} onChange={()=>setAvatar(a)} />
+              <span>{a}</span>
+            </label>
+          ))}
+        </div>
       </div>
       {joinCountdown !== null && (
-        <div style={{marginBottom:8}}>Tiempo para unirse: {joinCountdown}s</div>
+        <div className="muted" style={{marginBottom:8}}>Tiempo para unirse: {joinCountdown}s</div>
       )}
       {playersInRoom.length > 0 && (
         <div style={{marginBottom:8}}>
           <strong>Jugadores en sala:</strong>
-          <ul>
+          <ul className="nice-list">
             {playersInRoom.map(p => (
-              <li key={p.playerId}>{p.nickname || p.playerId}: {p.color}</li>
+              <li key={p.playerId} className="nice-item">
+                <span className="dot" style={{background: (p.color ? (p.color.toUpperCase()==='YELLOW' ? '#FFD700' : p.color.toUpperCase()==='PINK' ? '#FF69B4' : p.color.toUpperCase()==='PURPLE' ? '#800080' : p.color.toUpperCase()==='GREEN' ? '#2E8B57' : p.color.toUpperCase()==='WHITE' ? '#FFFFFF' : '#CCCCCC') : '#CCCCCC')}} />
+                <span style={{fontWeight:700}}>{p.nickname || p.playerId}</span>
+                <span className="muted" style={{marginLeft:'auto'}}>{p.color}</span>
+              </li>
             ))}
           </ul>
         </div>
       )}
-  <button onClick={createGame} disabled={creating}>{creating ? 'Creando...' : 'Crear sala'}</button>
+  <div className="form-actions" style={{marginTop:12}}>
+    <button onClick={createGame} disabled={creating}>{creating ? 'Creando...' : 'Crear sala'}</button>
+  </div>
       <hr />
-      <input value={code} onChange={e=>setCode(e.target.value)} placeholder="Código" />
+      <div className="form-row">
+        <label className="form-label">Código</label>
+        <input value={code} onChange={e=>setCode(e.target.value)} placeholder="Código" />
+      </div>
       {/* Show join or update depending on membership */}
-      {playersInRoom.some(p => p.playerId === playerIdRef.current) ? (
-  <button onClick={joinGame}>Actualizar avatar</button>
-      ) : (
-        <button onClick={joinGame}>Unirse</button>
-      )}
+      <div className="form-actions">
+        {playersInRoom.some(p => p.playerId === playerIdRef.current) ? (
+          <button onClick={joinGame}>Actualizar avatar</button>
+        ) : (
+          <button onClick={joinGame}>Unirse</button>
+        )}
+      </div>
+    </div>
     </div>
   )
 }

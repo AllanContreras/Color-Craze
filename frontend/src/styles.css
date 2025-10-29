@@ -22,6 +22,37 @@ body {
 .app-shell{ display:flex; align-items:center; justify-content:flex-start; min-height:100vh; padding:24px 24px 24px 12px }
 .container{ width:100%; max-width:1100px }
 .card{ background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02)); padding: var(--card-pad); border-radius:12px; box-shadow: 0 6px 24px rgba(2,6,23,0.6); }
+.card-lg{ padding: 24px }
+
+/* Modern forms */
+.page-section{ width:100%; max-width: 760px; margin: 24px auto; padding: 0 12px }
+.form-grid{ display:flex; flex-direction:column; gap:10px }
+.form-row{ display:flex; flex-direction:column; gap:6px }
+.form-row.inline{ flex-direction:row; gap:10px; align-items:center }
+label.form-label{ font-size:12px; color:#cbd5e1; letter-spacing:0.2px }
+input[type="text"], input[type="password"], input[type="email"], input[type="number"]{
+	width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.12);
+	background: rgba(255,255,255,0.06); color: #e5e7eb; outline:none;
+}
+input::placeholder{ color:#9aa4b2 }
+input:focus{ border-color: rgba(124,58,237,0.65); box-shadow: 0 0 0 3px rgba(124,58,237,0.18) }
+.form-actions{ display:flex; gap:10px; align-items:center; margin-top:8px }
+.muted{ color:#9aa4b2 }
+
+/* Radio pills for avatar */
+.radio-pills{ display:flex; flex-wrap:wrap; gap:8px }
+.radio-pill{ position:relative }
+.radio-pill input{ position:absolute; inset:0; opacity:0; pointer-events:none }
+.radio-pill span{
+	display:inline-block; padding:8px 12px; border-radius:999px; border:1px solid rgba(255,255,255,0.18);
+	background: rgba(255,255,255,0.04); color:#e5e7eb; cursor:pointer; user-select:none; font-weight:700; letter-spacing:0.2px
+}
+.radio-pill input:checked + span{ background: rgba(124,58,237,0.18); border-color: var(--accent); box-shadow: 0 0 0 2px rgba(124,58,237,0.25) inset }
+
+/* Nice list */
+.nice-list{ list-style:none; padding:0; margin:8px 0; display:flex; flex-direction:column; gap:6px }
+.nice-item{ display:flex; align-items:center; gap:8px; padding:8px 10px; border-radius:10px; background: rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08) }
+.dot{ width:12px; height:12px; border-radius:50%; border:1px solid rgba(0,0,0,0.35) }
 
 header{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:18px }
 header h2{ margin:0; font-size:20px; color:var(--accent) }
