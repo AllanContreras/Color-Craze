@@ -29,6 +29,9 @@ public class ArenaService {
     private final Map<String, ArenaState> arenas = new ConcurrentHashMap<>();
     private final Map<String, InputState> inputs = new ConcurrentHashMap<>(); // key: code|playerId
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
+    // Track scheduled tasks per game to allow proper cancellation and avoid leaks
+    private final Map<String, java.util.concurrent.ScheduledFuture<?>> tickTasks = new ConcurrentHashMap<>();
+    private final Map<String, java.util.concurrent.ScheduledFuture<?>> broadcastTasks = new ConcurrentHashMap<>();
 
     private static class InputState { volatile boolean left, right, jump; }
 
@@ -70,9 +73,17 @@ public class ArenaService {
         }
     arenas.put(code, st);
     try { System.out.println("[Arena] platforms=" + st.platforms.size()); } catch (Exception ignore) {}
-        // start physics loop (120 Hz/8.3ms) for smoother feel; broadcast at 20 Hz
-        scheduler.scheduleAtFixedRate(() -> tick(code), 0, 8, TimeUnit.MILLISECONDS);
-        scheduler.scheduleAtFixedRate(() -> broadcast(code), 0, 50, TimeUnit.MILLISECONDS);
+        // Cancel any previous tasks for this code (defensive)
+        var prevTick = tickTasks.remove(code);
+        if (prevTick != null) { try { prevTick.cancel(true); } catch (Exception ignore) {} }
+        var prevBroad = broadcastTasks.remove(code);
+        if (prevBroad != null) { try { prevBroad.cancel(true); } catch (Exception ignore) {} }
+
+        // Start physics loop (~83 Hz/12ms) and broadcast at ~15 Hz to reduce server load
+        var tickF = scheduler.scheduleAtFixedRate(() -> tick(code), 0, 12, TimeUnit.MILLISECONDS);
+        var broadF = scheduler.scheduleAtFixedRate(() -> broadcast(code), 0, 66, TimeUnit.MILLISECONDS);
+        tickTasks.put(code, tickF);
+        broadcastTasks.put(code, broadF);
         return st;
     }
 
@@ -84,7 +95,14 @@ public class ArenaService {
 
     public void stopGame(String code){
         arenas.remove(code);
-        // inputs map may retain entries, but harmless; could be cleaned by prefix
+        // Cancel and remove scheduled tasks for this game
+        var t = tickTasks.remove(code);
+        if (t != null) { try { t.cancel(true); } catch (Exception ignore) {} }
+        var b = broadcastTasks.remove(code);
+        if (b != null) { try { b.cancel(true); } catch (Exception ignore) {} }
+        // Clean up inputs for this game to free memory
+        String prefix = code + "|";
+        inputs.keySet().removeIf(k -> k.startsWith(prefix));
     }
 
     public ArenaState getState(String code){
