@@ -923,8 +923,28 @@ export default function Game(){
     {endStandings && (
       (()=>{
         const idToColor = new Map(players.map(p => [p.playerId, colorToHex(p.color)]))
+        const idToColorName = new Map(players.map(p => [p.playerId, (p.color||'').toUpperCase()]))
+        // Build percent-by-player map from final coverage; fallback to score ratio if missing
+        const pctById = new Map()
+        let missingAny = false
+        for (const s of endStandings){
+          const cname = idToColorName.get(s.playerId)
+          let pct = (cname && typeof coverageByColor[cname] === 'number') ? coverageByColor[cname] : null
+          if (pct === null || Number.isNaN(pct)) { missingAny = true }
+          pctById.set(s.playerId, pct)
+        }
+        if (missingAny){
+          const total = endStandings.reduce((acc, s)=> acc + (s.score||0), 0)
+          for (const s of endStandings){
+            if (pctById.get(s.playerId) == null){
+              const pct = total>0 ? Math.round(((s.score||0)/total)*100) : 0
+              pctById.set(s.playerId, pct)
+            }
+          }
+        }
         const winner = endStandings[0]
         const winnerColor = idToColor.get(winner?.playerId) || '#7c3aed'
+        const winnerPct = pctById.get(winner?.playerId) ?? 0
         const pieces = Array.from({length:18}).map((_,i)=>{
           const left = Math.floor((i/18)*100)
           const delay = (i%6)*0.25
@@ -944,7 +964,7 @@ export default function Game(){
                   <div className="winner-text">
                     <div className="title">¡Ganador!</div>
                     <div className="name">{winner.nickname || winner.playerId}</div>
-                    <div className="score"><span style={{color:winnerColor,fontWeight:700}}>{winner.score}</span> puntos</div>
+                    <div className="score"><span style={{color:winnerColor,fontWeight:700}}>{winnerPct}%</span> del mapa</div>
                   </div>
                 </div>
               )}
@@ -952,6 +972,7 @@ export default function Game(){
                 <ul>
                   {endStandings.map((s, idx)=>{
                     const col = idToColor.get(s.playerId) || '#9aa4b2'
+                    const pct = pctById.get(s.playerId) ?? 0
                     return (
                       <li key={s.playerId} className="standing-item" style={{borderColor: col}}>
                         <div className="place">{idx+1}</div>
@@ -959,7 +980,7 @@ export default function Game(){
                           <span className="who-avatar" style={{borderColor: col}}>{s.avatar ? avatarToEmoji(s.avatar) : '⭐'}</span>
                           <div className="who-name">{s.nickname || s.playerId}</div>
                         </div>
-                        <div className="pts"><span style={{color:col}}>{s.score}</span> pts</div>
+                        <div className="pts"><span style={{color:col}}>{pct}%</span></div>
                       </li>
                     )
                   })}
