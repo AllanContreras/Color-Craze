@@ -730,22 +730,22 @@ export default function Game(){
 
   // Compute territory coverage by color (percentage of painted cells)
   useEffect(()=>{
-    if (!arenaMode || !arenaConfig || !arenaFrame || !arenaFrame.paint) { setCoverageByColor({}); return }
-    let total = 0
+    if (!arenaMode || !arenaConfig) { setCoverageByColor({}); return }
+    const platforms = arenaConfig.platforms || []
+    const totalCells = platforms.reduce((sum, pl)=> sum + (pl?.cells || 0), 0)
+    if (!arenaFrame || !arenaFrame.paint || totalCells === 0){ setCoverageByColor({}); return }
     const counts = {}
-    for (let i=0;i<arenaConfig.platforms.length;i++){
+    for (let i=0;i<platforms.length;i++){
       const arr = arenaFrame.paint[i]
       if (!arr) continue
       for (let c of arr){
         if (!c) continue
-        total++
         counts[c] = (counts[c]||0) + 1
       }
     }
-    if (total === 0){ setCoverageByColor({}); return }
     const out = {}
     for (const [col, n] of Object.entries(counts)){
-      out[col] = Math.round((n/total)*100)
+      out[col] = Math.round((n/totalCells)*100)
     }
     setCoverageByColor(out)
   },[arenaMode, arenaConfig, arenaFrame])
