@@ -33,6 +33,9 @@ public class ArenaService {
     private final Map<String, java.util.concurrent.ScheduledFuture<?>> tickTasks = new ConcurrentHashMap<>();
     private final Map<String, java.util.concurrent.ScheduledFuture<?>> broadcastPosTasks = new ConcurrentHashMap<>();
     private final Map<String, java.util.concurrent.ScheduledFuture<?>> broadcastPaintTasks = new ConcurrentHashMap<>();
+    // Simple bot AI state: direction and next decision timestamp per bot (key: code|playerId)
+    private final Map<String, Integer> botDir = new ConcurrentHashMap<>(); // -1 left, +1 right
+    private final Map<String, Long> botNextDecisionMs = new ConcurrentHashMap<>();
 
     private static class InputState { volatile boolean left, right, jump; }
 
@@ -140,6 +143,8 @@ public class ArenaService {
     private void tick(String code){
         ArenaState st = arenas.get(code);
         if (st == null) return;
+        // Update bot inputs before integrating physics
+        try { updateBots(code, st); } catch (Exception ignore) {}
     final double dt = 0.008; // ~120 Hz
     final double gravity = 2400.0;
     final double maxSpeed = 300.0;
@@ -270,6 +275,39 @@ public class ArenaService {
                     }
                 }
             }
+        }
+    }
+
+    private void updateBots(String code, ArenaState st){
+        final long now = System.currentTimeMillis();
+        for (Player2D p : new java.util.ArrayList<>(st.players.values())){
+            if (p.playerId == null || !p.playerId.startsWith("bot_")) continue;
+            String key = code+"|"+p.playerId;
+            InputState in = inputs.computeIfAbsent(key, k -> new InputState());
+            // Determine platform underfoot similar to collision check
+            com.Color_craze.board.arena.models.Platform2D under = null;
+            for (var pl : st.platforms){
+                boolean over = (p.x + Player2D.WIDTH) > pl.x() && p.x < (pl.x() + pl.width());
+                if (over && Math.abs((p.y + Player2D.HEIGHT) - pl.y()) <= 3.0){ under = pl; break; }
+            }
+            int dir = botDir.getOrDefault(key, (Math.random() < 0.5 ? -1 : 1));
+            long nextDec = botNextDecisionMs.getOrDefault(key, 0L);
+            // If at edge of current platform, reverse
+            if (under != null){
+                double leftEdge = under.x();
+                double rightEdge = under.x() + under.width() - Player2D.WIDTH;
+                if (p.x <= leftEdge + 8) dir = 1;
+                else if (p.x >= rightEdge - 8) dir = -1;
+            }
+            // Periodic decision: every 700-1200ms randomly adjust direction or jump
+            if (now >= nextDec){
+                botNextDecisionMs.put(key, now + 700 + (long)(Math.random()*500));
+                double r = Math.random();
+                if (r < 0.20) dir = -dir; // 20% flip
+                if (p.onGround && r > 0.70) in.jump = true; // 30% chance to hop when grounded
+            }
+            botDir.put(key, dir);
+            in.left = dir < 0; in.right = dir > 0;
         }
     }
 

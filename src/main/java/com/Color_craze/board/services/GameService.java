@@ -263,6 +263,15 @@ public class GameService {
         if (gs.getPlatforms() != null && !gs.getPlatforms().isEmpty()) {
             boardService.applyPlatformStates(code, gs.getPlatforms());
         }
+        // If only one player, auto-add a CPU bot opponent so they don't play alone
+        if (gs.getPlayers().size() == 1) {
+            try {
+                var botColor = pickColor(gs);
+                var botId = "bot_" + code;
+                var bot = new PlayerEntry(botId, "CPU", botColor, "ROBOT");
+                gs.getPlayers().add(bot);
+            } catch (Exception ignored) {}
+        }
         for (PlayerEntry p : gs.getPlayers()) {
             boardService.ensurePlayerOnBoard(code, p.playerId, p.color);
         }
