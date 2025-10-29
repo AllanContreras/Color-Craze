@@ -357,29 +357,21 @@ export default function Game(){
       // City skyline silhouettes (3 parallax layers)
       const baseY = Math.floor(height*0.72)
       const layers = [
-        { y: baseY, h: 90, color: '#0d142b', alpha: 0.8, step: 42 },
-        { y: baseY+12, h: 70, color: '#111a39', alpha: 0.65, step: 50 },
-        { y: baseY+24, h: 50, color: '#162049', alpha: 0.5, step: 58 },
+        { y: baseY, h: 90, color: '#0d142b', alpha: 0.75, step: 48 },
+        { y: baseY+20, h: 60, color: '#162049', alpha: 0.55, step: 60 },
       ]
       ctx.save()
       for (const L of layers){
         ctx.globalAlpha = L.alpha
         ctx.fillStyle = L.color
         for (let x=0; x<width;){
-          const w = 24 + ((x/ L.step) % 1)*20 // deterministic pseudo-variation
-          const bh = 20 + ((Math.sin(x*0.03)+1)*0.5)*L.h
+          const w = 26 + ((x/ L.step) % 1)*22 // fewer, slightly wider buildings
+          const bh = 24 + ((Math.sin(x*0.03)+1)*0.5)*L.h
           ctx.fillRect(x, L.y - bh, w, bh)
-          // a few horizontal window bands
-          ctx.globalAlpha = L.alpha * 0.12
-          ctx.fillStyle = '#37e5ff'
-          const rows = 2
-          for (let r=1;r<=rows;r++){
-            const wy = L.y - Math.floor(bh*(r/(rows+1)))
-            ctx.fillRect(x+3, wy, w-6, 2)
-          }
+          // simplified windows (skip to reduce per-frame ops)
           ctx.globalAlpha = L.alpha
           ctx.fillStyle = L.color
-          x += Math.max(18, w)
+          x += Math.max(36, w + 16)
         }
       }
       ctx.restore()

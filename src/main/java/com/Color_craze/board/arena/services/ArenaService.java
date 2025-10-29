@@ -85,7 +85,7 @@ public class ArenaService {
         // Start physics loop (~120 Hz/8ms) for smooth feel.
         var tickF = scheduler.scheduleAtFixedRate(() -> tick(code), 0, 8, TimeUnit.MILLISECONDS);
         // Broadcast positions/scores at ~30 Hz and paint at ~6-7 Hz to reduce payload size.
-        var posF = scheduler.scheduleAtFixedRate(() -> broadcast(code, false), 0, 33, TimeUnit.MILLISECONDS);
+    var posF = scheduler.scheduleAtFixedRate(() -> broadcast(code, false), 0, 22, TimeUnit.MILLISECONDS);
         var paintF = scheduler.scheduleAtFixedRate(() -> broadcast(code, true), 0, 150, TimeUnit.MILLISECONDS);
         tickTasks.put(code, tickF);
         broadcastPosTasks.put(code, posF);
