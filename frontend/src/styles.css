@@ -61,6 +61,12 @@ nav a:hover{ color: white }
 
 button{ padding:8px 12px; background:var(--accent); border:none; color:white; border-radius:8px; cursor:pointer }
 button:disabled{ opacity:0.5; cursor:not-allowed }
+/* Secondary button variant */
+.btn-secondary{ background: rgba(255,255,255,0.12); color:#e5e7eb; border:1px solid rgba(255,255,255,0.18) }
+.btn-secondary:hover{ background: rgba(255,255,255,0.18) }
+
+/* Error text */
+.error{ color:#fca5a5 }
 
 .grid{ display:grid; grid-template-columns: repeat(31, 24px); gap:3px; background: rgba(0,0,0,0.12); padding:6px; border-radius:8px }
 .box{ width:24px; height:24px; border-radius:4px; box-shadow: inset 0 -1px 0 rgba(0,0,0,0.2); }

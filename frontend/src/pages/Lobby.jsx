@@ -16,6 +16,7 @@ export default function Lobby(){
   const [usedColors, setUsedColors] = useState([])
   const [playersInRoom, setPlayersInRoom] = useState([])
   const [joinCountdown, setJoinCountdown] = useState(null)
+  const [copied, setCopied] = useState(false)
   const stompRef = useRef(null)
   const playerIdRef = useRef(localStorage.getItem('cc_userId') || '')
 
@@ -159,6 +160,26 @@ export default function Lobby(){
 
   // Theme is now server-random; no manual apply needed
 
+  const avatarEmoji = (a) => {
+    switch((a||'').toUpperCase()){
+      case 'ROBOT': return '🤖'
+      case 'COWBOY': return '🤠'
+      case 'ALIEN': return '👽'
+      case 'WITCH': return '🧙‍♀️'
+      default: return '🎮'
+    }
+  }
+
+  const copyCode = async () => {
+    try{
+      await navigator.clipboard.writeText(code)
+      setCopied(true)
+      setTimeout(()=>setCopied(false), 1200)
+    }catch{
+      // ignore
+    }
+  }
+
   return (
     <div className="page-section">
       <div className="card card-lg">
@@ -175,7 +196,7 @@ export default function Lobby(){
           {['ROBOT','COWBOY','ALIEN','WITCH'].map(a => (
             <label key={a} className="radio-pill">
               <input type="radio" name="avatar" value={a} checked={avatar===a} onChange={()=>setAvatar(a)} />
-              <span>{a}</span>
+              <span><span style={{marginRight:6}}>{avatarEmoji(a)}</span>{a}</span>
             </label>
           ))}
         </div>
@@ -203,7 +224,10 @@ export default function Lobby(){
       <hr />
       <div className="form-row">
         <label className="form-label">Código</label>
-        <input value={code} onChange={e=>setCode(e.target.value)} placeholder="Código" />
+        <div style={{display:'flex', gap:8, alignItems:'center'}}>
+          <input style={{flex:1}} value={code} maxLength={6} onChange={e=>setCode(e.target.value.toUpperCase())} placeholder="ABC123" autoCapitalize="characters" />
+          <button type="button" className="btn-secondary" onClick={copyCode} disabled={!code || code.length!==6}>{copied ? 'Copiado' : 'Copiar'}</button>
+        </div>
       </div>
       {/* Show join or update depending on membership */}
       <div className="form-actions">

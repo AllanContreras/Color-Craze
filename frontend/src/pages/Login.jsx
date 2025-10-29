@@ -9,6 +9,7 @@ export default function Login(){
   const [guestNick, setGuestNick] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [showPwd, setShowPwd] = useState(false)
 
   const guest = async () => {
     setLoading(true); setError(null)
@@ -43,11 +44,14 @@ export default function Login(){
         <form onSubmit={submit} className="form-grid">
           <div className="form-row">
             <label className="form-label">Email</label>
-            <input placeholder="tucorreo@ejemplo.com" value={email} onChange={e=>setEmail(e.target.value)} />
+            <input type="email" autoComplete="email" placeholder="tucorreo@ejemplo.com" value={email} onChange={e=>setEmail(e.target.value)} />
           </div>
           <div className="form-row">
             <label className="form-label">Contraseña</label>
-            <input placeholder="••••••••" type="password" value={password} onChange={e=>setPassword(e.target.value)} />
+            <div style={{display:'flex', gap:8, alignItems:'center'}}>
+              <input style={{flex:1}} placeholder="••••••••" type={showPwd ? 'text' : 'password'} autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)} />
+              <button type="button" className="btn-secondary" onClick={()=>setShowPwd(s=>!s)}>{showPwd ? 'Ocultar' : 'Ver'}</button>
+            </div>
           </div>
           <div className="form-actions">
             <button type="submit" disabled={loading}>Entrar</button>
@@ -64,7 +68,7 @@ export default function Login(){
             <button onClick={guest} disabled={loading}>Entrar como invitado</button>
           </div>
         </div>
-        {error && <div style={{color:'salmon', marginTop:8}}>{error}</div>}
+        {error && <div className="error" style={{marginTop:8}}>{error}</div>}
       </div>
     </div>
   )
