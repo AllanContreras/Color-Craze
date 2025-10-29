@@ -278,37 +278,115 @@ public class ArenaService {
         }
     }
 
+    private static class BotTarget { int platformIndex; int cellIndex; double x; double y; }
+
     private void updateBots(String code, ArenaState st){
         final long now = System.currentTimeMillis();
         for (Player2D p : new java.util.ArrayList<>(st.players.values())){
             if (p.playerId == null || !p.playerId.startsWith("bot_")) continue;
             String key = code+"|"+p.playerId;
             InputState in = inputs.computeIfAbsent(key, k -> new InputState());
-            // Determine platform underfoot similar to collision check
-            com.Color_craze.board.arena.models.Platform2D under = null;
-            for (var pl : st.platforms){
+
+            // Determine platform underfoot (top-touch heuristic)
+            Platform2D under = null;
+            int underIndex = -1;
+            for (int i=0;i<st.platforms.size();i++){
+                var pl = st.platforms.get(i);
                 boolean over = (p.x + Player2D.WIDTH) > pl.x() && p.x < (pl.x() + pl.width());
-                if (over && Math.abs((p.y + Player2D.HEIGHT) - pl.y()) <= 3.0){ under = pl; break; }
+                if (over && Math.abs((p.y + Player2D.HEIGHT) - pl.y()) <= 3.0){ under = pl; underIndex = i; break; }
             }
+
+            // Find the nearest unpainted cell to pursue
+            BotTarget target = findNearestUnpainted(st, p);
+
             int dir = botDir.getOrDefault(key, (Math.random() < 0.5 ? -1 : 1));
             long nextDec = botNextDecisionMs.getOrDefault(key, 0L);
-            // If at edge of current platform, reverse
-            if (under != null){
-                double leftEdge = under.x();
-                double rightEdge = under.x() + under.width() - Player2D.WIDTH;
-                if (p.x <= leftEdge + 8) dir = 1;
-                else if (p.x >= rightEdge - 8) dir = -1;
+
+            if (target != null){
+                // Move horizontally towards target cell center
+                double centerX = p.x + Player2D.WIDTH * 0.5;
+                double dx = target.x - centerX;
+                if (Math.abs(dx) > 2){
+                    dir = dx < 0 ? -1 : 1;
+                } else {
+                    dir = 0; // already aligned horizontally
+                }
+
+                // Decide when to jump:
+                // 1) If target platform is above our feet and we're roughly aligned, hop up
+                boolean targetIsAbove = target.y < (p.y + Player2D.HEIGHT - 6);
+                boolean roughlyAligned = Math.abs(dx) < 30;
+                if (p.onGround && targetIsAbove && roughlyAligned){
+                    in.jump = true;
+                }
+
+                // 2) If target is beyond the edge of current platform, try a gap jump when near edge
+                if (under != null){
+                    double leftEdge = under.x();
+                    double rightEdge = under.x() + under.width() - Player2D.WIDTH;
+                    boolean targetOutside = (target.x < leftEdge) || (target.x > rightEdge + Player2D.WIDTH);
+                    boolean nearLeft = p.x <= leftEdge + 10;
+                    boolean nearRight = p.x >= rightEdge - 10;
+                    if (p.onGround && targetOutside && (nearLeft || nearRight)){
+                        in.jump = true;
+                    }
+                }
+
+                // Small randomness so it doesn't look like a perfect robot
+                if (now >= nextDec){
+                    botNextDecisionMs.put(key, now + 800 + (long)(Math.random()*600));
+                    if (Math.random() < 0.12) dir = -dir; // occasional hesitation/flip
+                }
+            } else {
+                // No unpainted cells left: roam casually (fallback behavior)
+                if (under != null){
+                    double leftEdge = under.x();
+                    double rightEdge = under.x() + under.width() - Player2D.WIDTH;
+                    if (p.x <= leftEdge + 8) dir = 1;
+                    else if (p.x >= rightEdge - 8) dir = -1;
+                }
+                if (now >= nextDec){
+                    botNextDecisionMs.put(key, now + 700 + (long)(Math.random()*500));
+                    double r = Math.random();
+                    if (r < 0.20) dir = -dir;
+                    if (p.onGround && r > 0.70) in.jump = true;
+                }
             }
-            // Periodic decision: every 700-1200ms randomly adjust direction or jump
-            if (now >= nextDec){
-                botNextDecisionMs.put(key, now + 700 + (long)(Math.random()*500));
-                double r = Math.random();
-                if (r < 0.20) dir = -dir; // 20% flip
-                if (p.onGround && r > 0.70) in.jump = true; // 30% chance to hop when grounded
-            }
+
             botDir.put(key, dir);
             in.left = dir < 0; in.right = dir > 0;
         }
+    }
+
+    // Heuristic: look for the closest unpainted cell across all platforms.
+    // Returns world coordinates at the center of that cell and its platform index.
+    private BotTarget findNearestUnpainted(ArenaState st, Player2D p){
+        double bestD2 = Double.POSITIVE_INFINITY;
+        BotTarget best = null;
+        double px = p.x + Player2D.WIDTH * 0.5;
+        double py = p.y + Player2D.HEIGHT; // use feet as reference
+        for (int i=0;i<st.platforms.size();i++){
+            var pl = st.platforms.get(i);
+            st.ensurePaintArray(i, pl.cells());
+            String[] arr = st.paint.get(i);
+            if (arr == null) continue;
+            double cellW = pl.width() / pl.cells();
+            for (int c=0;c<pl.cells();c++){
+                if (arr[c] != null) continue; // already painted
+                double cx = pl.x() + c*cellW + cellW*0.5;
+                double cy = pl.y(); // top of platform
+                double dx = cx - px;
+                double dy = cy - py;
+                double d2 = dx*dx + dy*dy;
+                if (d2 < bestD2){
+                    bestD2 = d2;
+                    BotTarget t = new BotTarget();
+                    t.platformIndex = i; t.cellIndex = c; t.x = cx; t.y = cy;
+                    best = t;
+                }
+            }
+        }
+        return best;
     }
 
     private double clamp(double v, double lo, double hi){
