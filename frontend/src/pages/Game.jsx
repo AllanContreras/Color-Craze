@@ -828,6 +828,32 @@ export default function Game(){
       setJoinLeft(remain)
       if (remain <= 0 && joinTimerRef.current){
         clearInterval(joinTimerRef.current)
+        // Fallback: if we miss the server's PLAYING state message, fetch status now
+        ;(async ()=>{
+          try{
+            const res = await api.get(`/api/games/${code}`)
+            if (res.data.status === 'PLAYING'){
+              setFullMode(true)
+              setCanMove(true)
+              try { localStorage.setItem('cc_isPlaying', 'true') } catch {}
+              setArenaMode(true)
+              if (res.data.arena) setArenaConfig(res.data.arena)
+              const startMs = res.data.startedAtMs || res.data.startTimestamp
+              const durMs = res.data.durationMs || res.data.duration || 40000
+              if (startMs){
+                const key = `${code}:${startMs}`
+                if (themeAssignedKeyRef.current !== key){
+                  if (res.data.theme) setArenaTheme(res.data.theme)
+                  else setArenaTheme(prev => prev ?? pickRandomTheme())
+                  themeAssignedKeyRef.current = key
+                }
+                const endAt = startMs + durMs
+                startTimer(Math.max(0, Math.floor((endAt - Date.now())/1000)))
+              }
+              setJoinLeft(null)
+            }
+          }catch{}
+        })()
       }
     }
     update()
