@@ -159,8 +159,16 @@ export default function Lobby(){
 
   // Theme is now server-random; no manual apply needed
 
+  const bgStyle = {
+    minHeight: '100vh',
+    background: "url('/assets/login-lobby-bg.png') center/cover no-repeat, linear-gradient(180deg, #0f172a 0%, #0b1220 100%)",
+    display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24
+  }
+  const cardStyle = { width: '100%', maxWidth: 720 }
+
   return (
-    <div>
+    <div style={bgStyle}>
+      <div className="card" style={cardStyle}>
       <h3>Lobby</h3>
       {/* Theme display: server chooses randomly; show selected theme when available */}
       <div style={{marginBottom:12}}>
@@ -198,6 +206,7 @@ export default function Lobby(){
       ) : (
         <button onClick={joinGame}>Unirse</button>
       )}
+      </div>
     </div>
   )
 }

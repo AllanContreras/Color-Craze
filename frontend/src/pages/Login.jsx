@@ -33,24 +33,33 @@ export default function Login(){
     }catch(err){ setError(err.response?.data?.message || err.message) }finally{ setLoading(false) }
   }
 
+  const bgStyle = {
+    minHeight: '100vh',
+    background: "url('/assets/login-lobby-bg.png') center/cover no-repeat, linear-gradient(180deg, #0f172a 0%, #0b1220 100%)",
+    display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24
+  }
+  const cardStyle = { width: '100%', maxWidth: 720 }
+
   return (
-    <div>
-      <h3>Login</h3>
-      <form onSubmit={submit}>
-        <div><input placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} /></div>
-        <div><input placeholder="Contraseña" type="password" value={password} onChange={e=>setPassword(e.target.value)} /></div>
-        <div style={{marginTop:8}}>
-          <button type="submit" disabled={loading}>Entrar</button>
+    <div style={bgStyle}>
+      <div className="card" style={cardStyle}>
+        <h3>Login</h3>
+        <form onSubmit={submit}>
+          <div><input placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} /></div>
+          <div><input placeholder="Contraseña" type="password" value={password} onChange={e=>setPassword(e.target.value)} /></div>
+          <div style={{marginTop:8}}>
+            <button type="submit" disabled={loading}>Entrar</button>
+          </div>
+        </form>
+        <div style={{marginTop:12}}>
+          <div style={{marginBottom:8}}>
+            <input placeholder="Nombre de jugador (invitado)" value={guestNick} onChange={e=>setGuestNick(e.target.value)} />
+          </div>
+          <button onClick={guest} disabled={loading}>Entrar como invitado</button>
+          <p style={{marginTop:8}}>o <a href="/register">registrarse</a></p>
         </div>
-      </form>
-      <div style={{marginTop:12}}>
-        <div style={{marginBottom:8}}>
-          <input placeholder="Nombre de jugador (invitado)" value={guestNick} onChange={e=>setGuestNick(e.target.value)} />
-        </div>
-        <button onClick={guest} disabled={loading}>Entrar como invitado</button>
-        <p style={{marginTop:8}}>o <a href="/register">registrarse</a></p>
+        {error && <div style={{color:'salmon', marginTop:8}}>{error}</div>}
       </div>
-      {error && <div style={{color:'salmon', marginTop:8}}>{error}</div>}
     </div>
   )
 }
