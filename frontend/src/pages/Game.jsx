@@ -42,6 +42,7 @@ export default function Game(){
   const inputRef = useRef({left:false,right:false,jump:false})
   const [arenaTheme, setArenaTheme] = useState(null) // 'metal' | 'cyber' | 'moon' (null => assign randomly on start)
   const [coverageByColor, setCoverageByColor] = useState({}) // color name -> percentage (0-100)
+  const [copiedRoom, setCopiedRoom] = useState(false)
   // Cyberpunk visuals state
   const platformPatternRef = useRef(null) // CanvasPattern cache for platform texture
   const lastPaintRef = useRef({})         // Per-platform snapshot of previous paint colors
@@ -843,7 +844,17 @@ export default function Game(){
   return (
     <>
     <div className="game-page">
-      <h3>Game {code}</h3>
+      <h3 style={{display:'flex', alignItems:'center', gap:8}}>
+        Game {code}
+        {!canMove && (
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={async ()=>{ try { await navigator.clipboard.writeText(code); setCopiedRoom(true); setTimeout(()=>setCopiedRoom(false), 1200); } catch {} }}
+            style={{padding:'4px 8px', fontSize:12}}
+          >{copiedRoom ? 'Copiado' : 'Copiar'}</button>
+        )}
+      </h3>
       <div className="game-layout">
         <main className="board-wrap" style={{position:'relative'}}>
           {arenaMode ? (

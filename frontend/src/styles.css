@@ -24,6 +24,15 @@ body {
 .card{ background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02)); padding: var(--card-pad); border-radius:12px; box-shadow: 0 6px 24px rgba(2,6,23,0.6); }
 .card-lg{ padding: 24px }
 
+/* Narrow/compact form variations for login */
+.form-narrow{ max-width: 440px; margin: 0 auto }
+.compact-inputs input[type="text"],
+.compact-inputs input[type="password"],
+.compact-inputs input[type="email"],
+.compact-inputs input[type="number"]{
+	padding: 8px 10px;
+}
+
 /* Modern forms */
 .page-section{ width:100%; max-width: 760px; margin: 24px auto; padding: 0 12px }
 .form-grid{ display:flex; flex-direction:column; gap:10px }

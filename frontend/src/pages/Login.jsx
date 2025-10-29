@@ -36,7 +36,7 @@ export default function Login(){
 
   return (
     <div className="page-section">
-      <div className="card card-lg">
+      <div className="card card-lg form-narrow compact-inputs">
         <header style={{marginBottom:12}}>
           <h2 style={{margin:0}}>Color Craze</h2>
         </header>
