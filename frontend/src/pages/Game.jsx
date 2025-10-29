@@ -84,7 +84,17 @@ export default function Game(){
       stomp.subscribe(`/topic/board/${code}/arena`, m => {
         try{
           const fr = JSON.parse(m.body)
-          setArenaFrame(fr)
+          // Merge frames: if paint is absent, keep previous paint for smoothness
+          setArenaFrame(prev => {
+            const merged = {
+              ...(prev || {}),
+              code: fr.code || prev?.code,
+              players: fr.players || prev?.players || [],
+              scores: fr.scores || prev?.scores || {}
+            }
+            if (fr.paint) merged.paint = fr.paint
+            return merged
+          })
           if (fr && fr.scores){
             setPlayers(prev => prev.map(p => ({...p, score: (fr.scores[p.playerId] ?? p.score ?? 0)})))
           }

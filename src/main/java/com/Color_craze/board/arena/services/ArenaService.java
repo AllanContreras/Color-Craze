@@ -31,7 +31,8 @@ public class ArenaService {
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
     // Track scheduled tasks per game to allow proper cancellation and avoid leaks
     private final Map<String, java.util.concurrent.ScheduledFuture<?>> tickTasks = new ConcurrentHashMap<>();
-    private final Map<String, java.util.concurrent.ScheduledFuture<?>> broadcastTasks = new ConcurrentHashMap<>();
+    private final Map<String, java.util.concurrent.ScheduledFuture<?>> broadcastPosTasks = new ConcurrentHashMap<>();
+    private final Map<String, java.util.concurrent.ScheduledFuture<?>> broadcastPaintTasks = new ConcurrentHashMap<>();
 
     private static class InputState { volatile boolean left, right, jump; }
 
@@ -76,14 +77,19 @@ public class ArenaService {
         // Cancel any previous tasks for this code (defensive)
         var prevTick = tickTasks.remove(code);
         if (prevTick != null) { try { prevTick.cancel(true); } catch (Exception ignore) {} }
-        var prevBroad = broadcastTasks.remove(code);
-        if (prevBroad != null) { try { prevBroad.cancel(true); } catch (Exception ignore) {} }
+        var prevPos = broadcastPosTasks.remove(code);
+        if (prevPos != null) { try { prevPos.cancel(true); } catch (Exception ignore) {} }
+        var prevPaint = broadcastPaintTasks.remove(code);
+        if (prevPaint != null) { try { prevPaint.cancel(true); } catch (Exception ignore) {} }
 
-        // Start physics loop (~83 Hz/12ms) and broadcast at ~15 Hz to reduce server load
-        var tickF = scheduler.scheduleAtFixedRate(() -> tick(code), 0, 12, TimeUnit.MILLISECONDS);
-        var broadF = scheduler.scheduleAtFixedRate(() -> broadcast(code), 0, 66, TimeUnit.MILLISECONDS);
+        // Start physics loop (~120 Hz/8ms) for smooth feel.
+        var tickF = scheduler.scheduleAtFixedRate(() -> tick(code), 0, 8, TimeUnit.MILLISECONDS);
+        // Broadcast positions/scores at ~30 Hz and paint at ~6-7 Hz to reduce payload size.
+        var posF = scheduler.scheduleAtFixedRate(() -> broadcast(code, false), 0, 33, TimeUnit.MILLISECONDS);
+        var paintF = scheduler.scheduleAtFixedRate(() -> broadcast(code, true), 0, 150, TimeUnit.MILLISECONDS);
         tickTasks.put(code, tickF);
-        broadcastTasks.put(code, broadF);
+        broadcastPosTasks.put(code, posF);
+        broadcastPaintTasks.put(code, paintF);
         return st;
     }
 
@@ -98,11 +104,24 @@ public class ArenaService {
         // Cancel and remove scheduled tasks for this game
         var t = tickTasks.remove(code);
         if (t != null) { try { t.cancel(true); } catch (Exception ignore) {} }
-        var b = broadcastTasks.remove(code);
-        if (b != null) { try { b.cancel(true); } catch (Exception ignore) {} }
+        var bp = broadcastPosTasks.remove(code);
+        if (bp != null) { try { bp.cancel(true); } catch (Exception ignore) {} }
+        var bq = broadcastPaintTasks.remove(code);
+        if (bq != null) { try { bq.cancel(true); } catch (Exception ignore) {} }
         // Clean up inputs for this game to free memory
         String prefix = code + "|";
         inputs.keySet().removeIf(k -> k.startsWith(prefix));
+    }
+
+    // includePaint=false => send only players+scores; true => include paint array as well
+    private void broadcast(String code, boolean includePaint){
+        ArenaState st = arenas.get(code);
+        if (st == null) return;
+        var players = st.players.values().stream().map(p -> new com.Color_craze.board.arena.dtos.ArenaFrame.PlayerPose(p.playerId, p.x, p.y, p.onGround)).collect(java.util.stream.Collectors.toList());
+        java.util.Map<String, Integer> scores = new java.util.HashMap<>();
+        for (var e : st.players.entrySet()) scores.put(e.getKey(), e.getValue().score);
+        var frame = new com.Color_craze.board.arena.dtos.ArenaFrame(code, players, includePaint ? st.paint : null, scores);
+        messagingTemplate.convertAndSend(String.format("/topic/board/%s/arena", code), frame);
     }
 
     public ArenaState getState(String code){
@@ -258,13 +277,5 @@ public class ArenaService {
         return Math.max(lo, Math.min(hi, v));
     }
 
-    private void broadcast(String code){
-        ArenaState st = arenas.get(code);
-        if (st == null) return;
-        var players = st.players.values().stream().map(p -> new ArenaFrame.PlayerPose(p.playerId, p.x, p.y, p.onGround)).collect(Collectors.toList());
-        java.util.Map<String, Integer> scores = new java.util.HashMap<>();
-        for (var e : st.players.entrySet()) scores.put(e.getKey(), e.getValue().score);
-        var frame = new ArenaFrame(code, players, st.paint, scores);
-        messagingTemplate.convertAndSend(String.format("/topic/board/%s/arena", code), frame);
-    }
+    // kept for reference; now unused
 }
