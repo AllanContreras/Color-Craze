@@ -1,7 +1,7 @@
 # Azure DevOps CI pipeline for Color-Craze
 # - Backend: Maven build + tests with JaCoCo coverage
 # - Frontend: Node + Vite build and optional Vitest coverage
-# - SonarCloud analysis (requires service connection and secrets)
+# - SonarCloud analysis (optional via variables)
 
 trigger:
   branches:
@@ -9,7 +9,7 @@ trigger:
       - main
 
 pool:
-  \n  name: Default
+  name: 'Default'  # Agente self-hosted en pool Default
 
 variables:
   # SonarCloud variables (set these in pipeline variables or variable group)
@@ -17,6 +17,8 @@ variables:
   SONAR_PROJECT_KEY: 'Color-Craze'
   SONAR_PROJECT_NAME: 'Color-Craze'
   SONAR_TOKEN: '' # set securely in pipeline variables
+  MAVEN_OPTS: "-Xmx1024m"
+  JAVA_HOME: "$(JAVA_HOME)"
 
 stages:
   - stage: Build_and_Test
@@ -25,11 +27,7 @@ stages:
       - job: Backend
         displayName: Backend (Maven)
         steps:
-          - task: JavaToolInstaller@0
-            inputs:
-              versionSpec: '17'
-              jdkArchitectureOption: 'x64'
-              jdkSourceOption: 'PreInstalled'
+          # Asumimos JDK 17 ya instalado en el agente self-hosted (Windows). Opcional instalar manualmente.
 
           - task: Cache@2
             inputs:
@@ -58,43 +56,36 @@ stages:
             displayName: 'Publicar cobertura (JaCoCo)'
 
           - script: |
-              echo "# SonarCloud" 
-              if [ -n "$(SONAR_TOKEN)" ]; then 
-                mvn -B sonar:sonar \
-                  -Dsonar.organization=$(SONAR_ORG) \
-                  -Dsonar.projectKey=$(SONAR_PROJECT_KEY) \
-                  -Dsonar.projectName=$(SONAR_PROJECT_NAME) \
-                  -Dsonar.host.url=https://sonarcloud.io \
-                  -Dsonar.login=$(SONAR_TOKEN)
+              echo "# SonarCloud"
+              if "$env:SONAR_TOKEN" -and "$env:SONAR_ORG" -and "$env:SONAR_PROJECT_KEY" -and "$env:SONAR_PROJECT_NAME"; then 
+                mvn -B sonar:sonar -Dsonar.organization=$(SONAR_ORG) -Dsonar.projectKey=$(SONAR_PROJECT_KEY) -Dsonar.projectName=$(SONAR_PROJECT_NAME) -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=$(SONAR_TOKEN)
               else 
-                echo "SONAR_TOKEN no configurado; saltando análisis SonarCloud"; 
+                echo "SONAR variables no configuradas; saltando análisis SonarCloud"
               fi
             displayName: 'Análisis SonarCloud (backend)'
 
       - job: Frontend
         displayName: Frontend (Node + Vite)
         steps:
-          - task: NodeTool@0
-            inputs:
-              versionSpec: '18.x'
+          # Asumimos Node 18.x instalado en el agente self-hosted.
 
           - task: Cache@2
             inputs:
               key: 'npm | "$(Agent.OS)" | **/frontend/package-lock.json'
               restoreKeys: 'npm | "$(Agent.OS)"'
-              path: '$(System.DefaultWorkingDirectory)/Color-craze-Backend-main/frontend/node_modules'
+              path: '$(System.DefaultWorkingDirectory)/frontend/node_modules'
 
           - script: |
-              cd Color-craze-Backend-main/frontend
+              cd frontend
               npm ci
               npm run build
             displayName: 'Vite build'
 
           - script: |
-              cd Color-craze-Backend-main/frontend
+              cd frontend
               if [ -f package.json ] && jq -e '.scripts.test' package.json >/dev/null; then 
-                npm test -- --coverage || true; 
+                npm test -- --coverage || true
               else 
-                echo "Sin tests configurados (Vitest/Jest)"; 
+                echo "Sin tests configurados (Vitest/Jest)"
               fi
             displayName: 'Tests frontend (opcional)'
