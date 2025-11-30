@@ -53,8 +53,8 @@ stages:
           - task: PublishCodeCoverageResults@1
             inputs:
               codeCoverageTool: 'JaCoCo'
-              summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/jacoco*.xml'
-              reportDirectory: '$(System.DefaultWorkingDirectory)/**/site/jacoco'
+              summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/target/site/jacoco/jacoco.xml'
+              reportDirectory: '$(System.DefaultWorkingDirectory)/**/target/site/jacoco'
             displayName: 'Publicar cobertura (JaCoCo)'
 
           - powershell: |
