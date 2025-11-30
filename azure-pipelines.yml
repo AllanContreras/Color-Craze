@@ -18,7 +18,6 @@ variables:
   SONAR_PROJECT_NAME: 'Color-Craze'
   SONAR_TOKEN: '' # set securely in pipeline variables
   MAVEN_OPTS: "-Xmx1024m"
-  JAVA_HOME: "$(JAVA_HOME)"
 
 stages:
   - stage: Build_and_Test
@@ -27,13 +26,14 @@ stages:
       - job: Backend
         displayName: Backend (Maven)
         steps:
+          - checkout: self
           # Asumimos JDK 17 ya instalado en el agente self-hosted (Windows). Opcional instalar manualmente.
 
           - task: Cache@2
             inputs:
               key: 'maven | "$(Agent.OS)" | **/pom.xml'
               restoreKeys: 'maven | "$(Agent.OS)"'
-              path: $(HOME)/.m2/repository
+              path: '$(USERPROFILE)/.m2/repository'
 
           - script: |
               mvn -version
@@ -55,18 +55,24 @@ stages:
               reportDirectory: '$(System.DefaultWorkingDirectory)/**/site/jacoco'
             displayName: 'Publicar cobertura (JaCoCo)'
 
-          - script: |
-              echo "# SonarCloud"
-              if "$env:SONAR_TOKEN" -and "$env:SONAR_ORG" -and "$env:SONAR_PROJECT_KEY" -and "$env:SONAR_PROJECT_NAME"; then 
-                mvn -B sonar:sonar -Dsonar.organization=$(SONAR_ORG) -Dsonar.projectKey=$(SONAR_PROJECT_KEY) -Dsonar.projectName=$(SONAR_PROJECT_NAME) -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=$(SONAR_TOKEN)
-              else 
-                echo "SONAR variables no configuradas; saltando análisis SonarCloud"
-              fi
+          - powershell: |
+              Write-Host "# SonarCloud"
+              if ($env:SONAR_TOKEN -and $env:SONAR_ORG -and $env:SONAR_PROJECT_KEY -and $env:SONAR_PROJECT_NAME) {
+                mvn -B sonar:sonar `
+                  -Dsonar.organization=$(SONAR_ORG) `
+                  -Dsonar.projectKey=$(SONAR_PROJECT_KEY) `
+                  -Dsonar.projectName=$(SONAR_PROJECT_NAME) `
+                  -Dsonar.host.url=https://sonarcloud.io `
+                  -Dsonar.login=$(SONAR_TOKEN)
+              } else {
+                Write-Host "SONAR variables no configuradas; saltando análisis SonarCloud"
+              }
             displayName: 'Análisis SonarCloud (backend)'
 
       - job: Frontend
         displayName: Frontend (Node + Vite)
         steps:
+          - checkout: self
           # Asumimos Node 18.x instalado en el agente self-hosted.
 
           - task: Cache@2
@@ -81,11 +87,16 @@ stages:
               npm run build
             displayName: 'Vite build'
 
-          - script: |
-              cd frontend
-              if [ -f package.json ] && jq -e '.scripts.test' package.json >/dev/null; then 
-                npm test -- --coverage || true
-              else 
-                echo "Sin tests configurados (Vitest/Jest)"
-              fi
+          - powershell: |
+              Set-Location frontend
+              if (Test-Path package.json) {
+                $pkg = Get-Content package.json -Raw | ConvertFrom-Json
+                if ($pkg.scripts -and $pkg.scripts.test) {
+                  npm test -- --coverage || $true
+                } else {
+                  Write-Host "Sin tests configurados (Vitest/Jest)"
+                }
+              } else {
+                Write-Host "Sin package.json"
+              }
             displayName: 'Tests frontend (opcional)'
