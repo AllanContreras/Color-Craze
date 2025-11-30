@@ -35,9 +35,11 @@ stages:
               restoreKeys: 'maven | "$(Agent.OS)"'
               path: '$(USERPROFILE)/.m2/repository'
 
-          - script: |
-              mvn -version
-              mvn -B -DskipTests=false clean verify
+          - powershell: |
+              Write-Host "Usando Maven Wrapper"
+              Get-ChildItem . -Force | Where-Object { $_.Name -like 'mvnw*' } | Format-Table Name
+              .\mvnw.cmd -version
+              .\mvnw.cmd -B -DskipTests=false clean verify
             displayName: 'Maven build & tests'
 
           - task: PublishTestResults@2
@@ -58,7 +60,7 @@ stages:
           - powershell: |
               Write-Host "# SonarCloud"
               if ($env:SONAR_TOKEN -and $env:SONAR_ORG -and $env:SONAR_PROJECT_KEY -and $env:SONAR_PROJECT_NAME) {
-                mvn -B sonar:sonar `
+                .\mvnw.cmd -B sonar:sonar `
                   -Dsonar.organization=$(SONAR_ORG) `
                   -Dsonar.projectKey=$(SONAR_PROJECT_KEY) `
                   -Dsonar.projectName=$(SONAR_PROJECT_NAME) `
@@ -92,7 +94,11 @@ stages:
               if (Test-Path package.json) {
                 $pkg = Get-Content package.json -Raw | ConvertFrom-Json
                 if ($pkg.scripts -and $pkg.scripts.test) {
-                  npm test -- --coverage || $true
+                  try {
+                    npm test -- --coverage
+                  } catch {
+                    Write-Warning "Tests fallaron; continuando como opcional"
+                  }
                 } else {
                   Write-Host "Sin tests configurados (Vitest/Jest)"
                 }
