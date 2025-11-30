@@ -43,6 +43,11 @@ public class GameService {
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
     private final ArenaService arenaService;
 
+    // Simple per-player movement rate limiter: allow up to 20 move requests per second
+    private final Map<String, RateCounter> moveRate = new java.util.concurrent.ConcurrentHashMap<>();
+
+    private static class RateCounter { long windowStartMs; int count; }
+
     // Configurable timings (in seconds)
     private static final long JOIN_WINDOW_SECONDS = 60; // tiempo para unirse
     private static final long GAME_DURATION_SECONDS = 60; // duración de la partida
@@ -138,6 +143,16 @@ public class GameService {
         if (!"PLAYING".equals(gs.getStatus())) {
             // Ignore moves unless the game is in PLAYING
             return null;
+        }
+        // Rate limit per playerId in this room (max 20 msg/s)
+        String key = code+"|"+playerId;
+        long now = System.currentTimeMillis();
+        RateCounter rc = moveRate.computeIfAbsent(key, k -> new RateCounter());
+        if (now - rc.windowStartMs >= 1000) { rc.windowStartMs = now; rc.count = 0; }
+        rc.count++;
+        if (rc.count > 20) {
+            // Drop excessive messages silently to protect performance
+            return Map.of("playerId", playerId, "success", false, "rateLimited", true);
         }
         // validate player exists in session
         GameSession.PlayerEntry pe = gs.getPlayers().stream().filter(p -> p.playerId.equals(playerId)).findFirst().orElseThrow(() -> new IllegalArgumentException("Player not in game"));

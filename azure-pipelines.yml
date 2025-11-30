@@ -1,0 +1,100 @@
+# Azure DevOps CI pipeline for Color-Craze
+# - Backend: Maven build + tests with JaCoCo coverage
+# - Frontend: Node + Vite build and optional Vitest coverage
+# - SonarCloud analysis (requires service connection and secrets)
+
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  # SonarCloud variables (set these in pipeline variables or variable group)
+  SONAR_ORG: 'your-sonarcloud-org'
+  SONAR_PROJECT_KEY: 'Color-Craze'
+  SONAR_PROJECT_NAME: 'Color-Craze'
+  SONAR_TOKEN: '' # set securely in pipeline variables
+
+stages:
+  - stage: Build_and_Test
+    displayName: Build, Test, Analyze
+    jobs:
+      - job: Backend
+        displayName: Backend (Maven)
+        steps:
+          - task: JavaToolInstaller@0
+            inputs:
+              versionSpec: '17'
+              jdkArchitectureOption: 'x64'
+              jdkSourceOption: 'PreInstalled'
+
+          - task: Cache@2
+            inputs:
+              key: 'maven | "$(Agent.OS)" | **/pom.xml'
+              restoreKeys: 'maven | "$(Agent.OS)"'
+              path: $(HOME)/.m2/repository
+
+          - script: |
+              mvn -version
+              mvn -B -DskipTests=false clean verify
+            displayName: 'Maven build & tests'
+
+          - task: PublishTestResults@2
+            inputs:
+              testResultsFormat: 'JUnit'
+              testResultsFiles: '**/surefire-reports/*.xml'
+              searchFolder: '$(System.DefaultWorkingDirectory)'
+              mergeTestResults: true
+            displayName: 'Publicar resultados de tests (backend)'
+
+          - task: PublishCodeCoverageResults@1
+            inputs:
+              codeCoverageTool: 'JaCoCo'
+              summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/jacoco*.xml'
+              reportDirectory: '$(System.DefaultWorkingDirectory)/**/site/jacoco'
+            displayName: 'Publicar cobertura (JaCoCo)'
+
+          - script: |
+              echo "# SonarCloud" 
+              if [ -n "$(SONAR_TOKEN)" ]; then 
+                mvn -B sonar:sonar \
+                  -Dsonar.organization=$(SONAR_ORG) \
+                  -Dsonar.projectKey=$(SONAR_PROJECT_KEY) \
+                  -Dsonar.projectName=$(SONAR_PROJECT_NAME) \
+                  -Dsonar.host.url=https://sonarcloud.io \
+                  -Dsonar.login=$(SONAR_TOKEN)
+              else 
+                echo "SONAR_TOKEN no configurado; saltando análisis SonarCloud"; 
+              fi
+            displayName: 'Análisis SonarCloud (backend)'
+
+      - job: Frontend
+        displayName: Frontend (Node + Vite)
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: '18.x'
+
+          - task: Cache@2
+            inputs:
+              key: 'npm | "$(Agent.OS)" | **/frontend/package-lock.json'
+              restoreKeys: 'npm | "$(Agent.OS)"'
+              path: '$(System.DefaultWorkingDirectory)/Color-craze-Backend-main/frontend/node_modules'
+
+          - script: |
+              cd Color-craze-Backend-main/frontend
+              npm ci
+              npm run build
+            displayName: 'Vite build'
+
+          - script: |
+              cd Color-craze-Backend-main/frontend
+              if [ -f package.json ] && jq -e '.scripts.test' package.json >/dev/null; then 
+                npm test -- --coverage || true; 
+              else 
+                echo "Sin tests configurados (Vitest/Jest)"; 
+              fi
+            displayName: 'Tests frontend (opcional)'
