@@ -57,10 +57,11 @@ public class StompAuthInterceptor implements ChannelInterceptor {
                 String code = tail.split("/")[0];
                 // If username is known (JWT provided), ensure user is part of the game session
                 if (username != null && code != null) {
+                    final String uname = username; // make effectively final for lambda use
                     var opt = gameRepository.findByCode(code);
                     if (opt.isPresent()) {
                         var gs = opt.get();
-                        boolean member = gs.getPlayers().stream().anyMatch(p -> username.equals(p.nickname) || username.equals(p.playerId));
+                        boolean member = gs.getPlayers().stream().anyMatch(p -> uname.equals(p.nickname) || uname.equals(p.playerId));
                         if (!member) throw new IllegalStateException("Not authorized for this room");
                     }
                 }
