@@ -7,6 +7,10 @@ trigger:
   branches:
     include:
       - main
+      - chore/*
+      - feature/*
+      - bugfix/*
+      - chore/sonarcloud-verify
 
 pr:
   branches:
@@ -159,8 +163,11 @@ stages:
               cliSources: 'src/main/java,frontend/src'
               extraProperties: |
                 sonar.host.url=https://sonarcloud.io
-                sonar.coverage.jacoco.xmlReportPaths=$(System.DefaultWorkingDirectory)/**/target/site/jacoco/jacoco.xml
-                sonar.javascript.lcov.reportPaths=$(System.DefaultWorkingDirectory)/frontend/coverage/lcov.info
+                # Usar los artefactos descargados por este job
+                sonar.coverage.jacoco.xmlReportPaths=$(System.DefaultWorkingDirectory)/.artifacts/backend-coverage/jacoco.xml
+                sonar.javascript.lcov.reportPaths=$(System.DefaultWorkingDirectory)/.artifacts/frontend-coverage/lcov.info
+                # Versionar análisis para que "Previous version" funcione en New Code
+                sonar.projectVersion=$(Build.BuildNumber)
                 sonar.tests=src/test/java,frontend/src
                 sonar.test.inclusions=src/test/java/**/*Test.java,frontend/src/**/*.{test,spec}.{js,jsx,ts,tsx}
                 sonar.exclusions=**/node_modules/**,**/target/**,frontend/coverage/**
