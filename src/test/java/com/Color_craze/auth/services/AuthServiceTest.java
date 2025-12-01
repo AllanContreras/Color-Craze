@@ -43,7 +43,8 @@ public class AuthServiceTest {
     void login_success_generates_tokens() {
         AuthUser user = AuthUser.builder().id("u1").email("a@b.com").nickname("nick").password("x").build();
         when(authRepository.findByEmail("a@b.com")).thenReturn(Optional.of(user));
-        doNothing().when(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+            .thenReturn(new UsernamePasswordAuthenticationToken("a@b.com", "pass"));
         when(jwtService.generateToken(any(CustomUserDetails.class))).thenReturn("tok");
         when(jwtService.generateRefreshToken(any(CustomUserDetails.class))).thenReturn("rtok");
 
