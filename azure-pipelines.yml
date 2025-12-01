@@ -87,9 +87,19 @@ stages:
               restoreKeys: 'npm | "$(Agent.OS)"'
               path: '$(System.DefaultWorkingDirectory)/frontend/node_modules'
 
-          - script: |
-              cd frontend
-              npm ci
+          - powershell: |
+              Set-Location frontend
+              if (Test-Path package-lock.json) {
+                Write-Host "Encontrado package-lock.json; usando npm ci"
+                npm ci
+                if (!$?) {
+                  Write-Warning "npm ci falló; intentando npm install"
+                  npm install --no-fund --no-audit
+                }
+              } else {
+                Write-Host "Sin package-lock.json; usando npm install"
+                npm install --no-fund --no-audit
+              }
               npm run build
             displayName: 'Vite build'
 
