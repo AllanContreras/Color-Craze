@@ -172,15 +172,15 @@ stages:
 
               $args = @(
                 '-B','sonar:sonar',
-                "-Dsonar.organization=$env:SONARCLOUD_ORG",
-                "-Dsonar.projectKey=$env:SONARCLOUD_PROJECTKEY",
-                "-Dsonar.projectName=$env:SONARCLOUD_PROJECT_NAME",
+                "-Dsonar.organization=$env:SONAR_ORG",
+                "-Dsonar.projectKey=$env:SONAR_PROJECT_KEY",
+                "-Dsonar.projectName=$env:SONAR_PROJECT_NAME",
                 '-Dsonar.host.url=https://sonarcloud.io',
                 "-Dsonar.projectVersion=$(Build.BuildNumber)",
                 "-Dsonar.tests=src/test/java,frontend/src",
                 "-Dsonar.test.inclusions=src/test/java/**/*Test.java,frontend/src/**/*.{test,spec}.{js,jsx,ts,tsx}",
                 "-Dsonar.exclusions=**/node_modules/**,**/target/**,frontend/coverage/**",
-                "-Dsonar.login=$env:SONARCLOUD_TOKEN"
+                "-Dsonar.login=$env:SONAR_TOKEN"
               )
 
               if ($jacocoItem) {
