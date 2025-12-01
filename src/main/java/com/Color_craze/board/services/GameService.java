@@ -45,6 +45,8 @@ public class GameService {
     private final ArenaService arenaService;
     private final io.micrometer.core.instrument.MeterRegistry meterRegistry;
     @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private org.springframework.data.redis.core.StringRedisTemplate redis;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
     private GameStateSnapshotService snapshotService;
 
     // Legacy simple rate counter removed; using Bucket4j via MoveRateLimiter
@@ -191,6 +193,39 @@ public class GameService {
             snapshot.put("platforms", gs.getPlatforms());
             snapshotService.saveBoard(code, mapper.writeValueAsString(snapshot));
         } } catch (Exception ignored) {}
+
+        // Persist live state to Redis for multi-instance continuity (optional)
+        try {
+            if (redis != null) {
+                var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                java.util.Map<String, Object> live = new java.util.HashMap<>();
+                live.put("game", Map.of(
+                    "code", gs.getCode(),
+                    "status", gs.getStatus(),
+                    "players", gs.getPlayers().stream().map(p -> Map.of(
+                        "playerId", p.playerId,
+                        "nickname", p.nickname,
+                        "color", p.color.name(),
+                        "avatar", p.avatar,
+                        "score", p.score
+                    )).collect(java.util.stream.Collectors.toList())
+                ));
+                var b3 = boardService.getOrCreateBoard(code);
+                var pos3 = b3.getPlayers().entrySet().stream()
+                    .map(e -> java.util.Map.of(
+                        "playerId", e.getKey().toString(),
+                        "row", e.getValue().getRow(),
+                        "col", e.getValue().getCol(),
+                        "color", e.getValue().getColor().name()
+                    ))
+                    .collect(java.util.stream.Collectors.toList());
+                live.put("positions", pos3);
+                live.put("platforms", gs.getPlatforms());
+                String json = mapper.writeValueAsString(live);
+                redis.opsForValue().set("game:" + code, json);
+                redis.opsForValue().set("board:" + code, json);
+            }
+        } catch (Exception ignored) {}
 
         // Build a client-friendly payload with original playerIds as strings
         java.util.List<Map<String, Object>> platforms = new java.util.ArrayList<>();
