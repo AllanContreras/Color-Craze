@@ -95,7 +95,17 @@ stages:
 
           - powershell: |
               Set-Location frontend
-              npm ci
+              if (Test-Path package-lock.json) {
+                Write-Host "Encontrado package-lock.json; usando npm ci"
+                npm ci
+                if (!$?) {
+                  Write-Warning "npm ci falló; intentando npm install"
+                  npm install --no-fund --no-audit
+                }
+              } else {
+                Write-Host "Sin package-lock.json; usando npm install"
+                npm install --no-fund --no-audit
+              }
               try {
                 npm test
               } catch {
