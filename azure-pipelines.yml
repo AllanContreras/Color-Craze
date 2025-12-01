@@ -69,6 +69,7 @@ stages:
                   -Dsonar.projectName=$(SONAR_PROJECT_NAME) `
                   -Dsonar.host.url=https://sonarcloud.io `
                   -Dsonar.coverage.jacoco.xmlReportPaths=$(System.DefaultWorkingDirectory)/target/site/jacoco/jacoco.xml `
+                  -Dsonar.qualitygate.wait=true `
                   -Dsonar.login=$(SONAR_TOKEN)
               } else {
                 Write-Host "SONAR variables no configuradas; saltando análisis SonarCloud"
