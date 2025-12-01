@@ -1,39 +1,33 @@
 package com.Color_craze.board.services;
 
-import java.time.Duration;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import org.springframework.stereotype.Component;
 
-import io.github.bucket4j.Bandwidth;
-import io.github.bucket4j.Bucket;
-import io.github.bucket4j.Refill;
-
 /**
- * Centralized rate limiter for player movement messages using Bucket4j.
- * Policy: max 20 moves per second per (gameCode, playerId).
+ * Simple token bucket style limiter (in-memory) for movement messages.
+ * Policy: max 20 moves per rolling 1s window per (gameCode, playerId).
  */
 @Component
 public class MoveRateLimiter {
 
-    private final ConcurrentMap<String, Bucket> buckets = new ConcurrentHashMap<>();
+    private static class Counter { long windowStartMs; int used; }
 
-    private Bucket createBucket() {
-        Bandwidth limit = Bandwidth.classic(20, Refill.greedy(20, Duration.ofSeconds(1)));
-        return Bucket.builder().addLimit(limit).build();
-    }
+    private final ConcurrentMap<String, Counter> counters = new ConcurrentHashMap<>();
+    private static final int LIMIT = 20;
+    private static final long WINDOW_MS = 1000L;
 
-    private Bucket getBucket(String key) {
-        return buckets.computeIfAbsent(key, k -> createBucket());
-    }
-
-    /**
-     * Returns true if the move is allowed under the current rate limit.
-     */
     public boolean allow(String gameCode, String playerId) {
         String key = gameCode + "|" + playerId;
-        Bucket b = getBucket(key);
-        return b.tryConsume(1);
+        long now = System.currentTimeMillis();
+        Counter c = counters.computeIfAbsent(key, k -> new Counter());
+        if (now - c.windowStartMs >= WINDOW_MS) {
+            c.windowStartMs = now;
+            c.used = 0;
+        }
+        if (c.used >= LIMIT) return false;
+        c.used++;
+        return true;
     }
 }
