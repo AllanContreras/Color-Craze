@@ -11,6 +11,8 @@ import com.Color_craze.board.services.GameService;
 import com.Color_craze.board.services.MoveRateLimiter;
 
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Controller
 @RequiredArgsConstructor
@@ -19,13 +21,15 @@ public class GameSocketController {
     private final GameService gameService;
     private final SimpMessagingTemplate messagingTemplate;
     private final MoveRateLimiter rateLimiter;
+    private static final Logger log = LoggerFactory.getLogger(GameSocketController.class);
 
     @MessageMapping("/move")
     public void handlePlayerMove(@Payload PlayerMoveRoomMessage moveMessage) {
         String code = moveMessage.getCode();
         String playerId = moveMessage.getPlayerId();
         if (!rateLimiter.allow(code, playerId)) {
-            // Drop excessive messages silently to protect game loop; optionally send 429 via a queue
+            // Drop excessive messages to protect game loop; log WARN for audit/monitoring
+            try { log.warn("Rate limit exceeded: game={}, playerId={}", code, playerId); } catch (Exception ignored) {}
             return;
         }
         Object payload = gameService.handlePlayerMove(code, playerId, moveMessage.getDirection());
