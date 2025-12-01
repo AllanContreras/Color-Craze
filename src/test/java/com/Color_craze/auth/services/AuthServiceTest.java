@@ -50,7 +50,7 @@ public class AuthServiceTest {
         AuthResponse resp = authService.login(new LoginRequest("a@b.com", "pass"));
         assertEquals("tok", resp.token());
         assertEquals("rtok", resp.refreshToken());
-        assertEquals("a@b.com", resp.user().email());
+        assertEquals("a@b.com", resp.userData().email());
     }
 
     @Test
@@ -88,8 +88,8 @@ public class AuthServiceTest {
         when(authRepository.save(any(AuthUser.class))).thenAnswer(inv -> inv.getArgument(0));
 
         AuthResponse resp = authService.createGuestToken();
-        assertNotNull(resp.user().id());
-        assertTrue(resp.user().email().startsWith("guest_"));
+        assertNotNull(resp.userData().id());
+        assertTrue(resp.userData().email().startsWith("guest_"));
         assertEquals("gtok", resp.token());
         assertEquals("grtok", resp.refreshToken());
     }
@@ -106,7 +106,7 @@ public class AuthServiceTest {
         when(jwtService.generateRefreshToken(any(CustomUserDetails.class))).thenReturn("rtok");
 
         AuthResponse resp = authService.register(req);
-        assertEquals("x@y.com", resp.user().email());
+        assertEquals("x@y.com", resp.userData().email());
         assertEquals("tok", resp.token());
         assertEquals("rtok", resp.refreshToken());
     }

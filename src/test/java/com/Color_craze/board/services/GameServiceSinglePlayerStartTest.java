@@ -93,8 +93,8 @@ class GameServiceSinglePlayerStartTest {
         when(gameRepository.findByCode(code)).thenReturn(Optional.of(gs));
         // updateTheme always throws conflict
         var ex = assertThrows(org.springframework.web.server.ResponseStatusException.class, () ->
-            gameService.updateTheme(code, new com.Color_craze.board.dtos.UpdateThemeRequest("metal"))
+            gameService.updateTheme(code, new com.Color_craze.board.dtos.UpdateThemeRequest("p1", "metal"))
         );
-        assertEquals(org.springframework.http.HttpStatus.CONFLICT, ex.getStatus());
+        assertEquals(org.springframework.http.HttpStatus.CONFLICT, ex.getStatusCode());
     }
 }
