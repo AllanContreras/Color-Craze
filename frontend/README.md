@@ -14,3 +14,7 @@ La app se lanzará en http://localhost:5173 por defecto y consumirá el backend 
 Notas:
 - WebSocket: usa SockJS + STOMP en /color-craze/ws
 - Variables y endpoints están hardcodeados para desarrollo local.
+
+CI / SonarCloud:
+- Las pruebas de Vitest generan cobertura en `frontend/coverage/lcov.info`.
+- El pipeline de Azure recoge esta cobertura y SonarCloud la combina con JaCoCo.
