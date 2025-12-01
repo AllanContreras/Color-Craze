@@ -73,10 +73,10 @@ public class SnapshotAdminController {
             .sorted((a,b) -> Integer.compare(b.score, a.score))
             .map(p -> Map.of("playerId", p.playerId, "nickname", p.nickname, "color", p.color.name(), "score", p.score))
             .collect(Collectors.toList());
-        return ResponseEntity.ok(Map.of(
-            "code", gs.getCode(),
-            "status", gs.getStatus(),
-            "scoreboard", scoreboard
-        ));
+        java.util.Map<String,Object> out = new java.util.HashMap<>();
+        out.put("code", gs.getCode());
+        out.put("status", gs.getStatus()); // puede ser null
+        out.put("scoreboard", scoreboard);
+        return ResponseEntity.ok(out);
     }
 }
