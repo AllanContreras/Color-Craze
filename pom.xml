@@ -28,6 +28,12 @@
 	</properties>
 
 	<dependencies>
+		<!-- Micrometer Prometheus registry for metrics exposition -->
+		<dependency>
+			<groupId>io.micrometer</groupId>
+			<artifactId>micrometer-registry-prometheus</artifactId>
+			<version>1.15.3</version>
+		</dependency>
 		<!-- JSON logging encoder for structured logs (security & incident tracing) -->
 		<dependency>
 			<groupId>net.logstash.logback</groupId>

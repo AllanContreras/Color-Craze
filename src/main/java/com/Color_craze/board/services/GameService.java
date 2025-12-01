@@ -43,6 +43,7 @@ public class GameService {
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
     private final MoveRateLimiter moveRateLimiter;
     private final ArenaService arenaService;
+    private final io.micrometer.core.instrument.MeterRegistry meterRegistry;
 
     // Legacy simple rate counter removed; using Bucket4j via MoveRateLimiter
 
@@ -83,6 +84,7 @@ public class GameService {
                 });
             } catch (Exception ignored) {}
         }, JOIN_WINDOW_SECONDS, TimeUnit.SECONDS);
+        meterRegistry.counter("game.rooms.created").increment();
         return new CreateGameResponse(code);
     }
 
@@ -137,6 +139,7 @@ public class GameService {
     }
 
     public Map<String, Object> handlePlayerMove(String code, String playerId, PlayerMove direction) {
+        meterRegistry.counter("game.move.attempts").increment();
         GameSession gs = gameRepository.findByCode(code).orElseThrow(() -> new IllegalArgumentException("Game not found"));
         if (!"PLAYING".equals(gs.getStatus())) {
             // Ignore moves unless the game is in PLAYING
@@ -144,8 +147,10 @@ public class GameService {
         }
         // Rate limit per (game, player) using centralized limiter (max 20 msg/s)
         if (!moveRateLimiter.allow(code, playerId)) {
+            meterRegistry.counter("game.move.rate_limited").increment();
             return Map.of("playerId", playerId, "success", false, "rateLimited", true);
         }
+        long startNs = System.nanoTime();
         // validate player exists in session
         GameSession.PlayerEntry pe = gs.getPlayers().stream().filter(p -> p.playerId.equals(playerId)).findFirst().orElseThrow(() -> new IllegalArgumentException("Player not in game"));
 
@@ -197,6 +202,11 @@ public class GameService {
         payload.put("platforms", platforms);
         payload.put("affectedPlayers", affected);
         payload.put("success", result.success());
+        if (Boolean.TRUE.equals(result.success())) {
+            meterRegistry.counter("game.move.success").increment();
+        }
+        long elapsed = System.nanoTime() - startNs;
+        meterRegistry.timer("game.move.latency").record(elapsed, java.util.concurrent.TimeUnit.NANOSECONDS);
         return payload;
     }
 
@@ -264,6 +274,7 @@ public class GameService {
 
     private void startGame(GameSession gs) {
         if ("PLAYING".equals(gs.getStatus())) return;
+        meterRegistry.counter("game.rooms.start.invocations").increment();
         // ensure board exists and players are present BEFORE flipping status to avoid race with GET
         String code = gs.getCode();
         boardService.getOrCreateBoard(code);
@@ -333,6 +344,7 @@ public class GameService {
 
         // schedule end in 40 seconds
         scheduler.schedule(() -> endGame(gs.getCode()), GAME_DURATION_SECONDS, TimeUnit.SECONDS);
+        meterRegistry.counter("game.rooms.started").increment();
     }
 
     public void updatePlayer(String code, UpdatePlayerRequest req) {
@@ -379,6 +391,7 @@ public class GameService {
         Optional<GameSession> opt = gameRepository.findByCode(code);
         if (opt.isEmpty()) return;
         GameSession gs = opt.get();
+        meterRegistry.counter("game.rooms.end.invocations").increment();
         // Sync arena scores back to game session before finishing
         try {
             var st = arenaService.getState(code);
@@ -400,6 +413,7 @@ public class GameService {
             .collect(Collectors.toList());
         messagingTemplate.convertAndSend(String.format("/topic/board/%s/end", code), Map.of("code", code, "standings", standings));
         try { arenaService.stopGame(code); } catch (Exception ignored) {}
+        meterRegistry.counter("game.rooms.ended").increment();
     }
 
     public void restartGame(String code) {

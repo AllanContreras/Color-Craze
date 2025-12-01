@@ -22,7 +22,9 @@ class GameServiceMoreTest {
     private BoardService boardService;
     private SimpMessagingTemplate messagingTemplate;
     private ArenaService arenaService;
+    private MoveRateLimiter moveRateLimiter;
     private GameService gameService;
+    private io.micrometer.core.instrument.simple.SimpleMeterRegistry meterRegistry;
 
     @BeforeEach
     void setup(){
@@ -30,7 +32,9 @@ class GameServiceMoreTest {
         boardService = new BoardService();
         messagingTemplate = mock(SimpMessagingTemplate.class);
         arenaService = mock(ArenaService.class);
-        gameService = new GameService(gameRepository, boardService, messagingTemplate, arenaService);
+        moveRateLimiter = new MoveRateLimiter();
+        meterRegistry = new io.micrometer.core.instrument.simple.SimpleMeterRegistry();
+        gameService = new GameService(gameRepository, boardService, messagingTemplate, moveRateLimiter, arenaService, meterRegistry);
     }
 
     @Test
