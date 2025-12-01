@@ -8,15 +8,20 @@ trigger:
     include:
       - main
 
+pr:
+  branches:
+    include:
+      - '*'
+
 pool:
-  name: 'Default'  # Agente self-hosted en pool Default
+  vmImage: 'windows-latest'  # Usar agente hospedado de Microsoft para este PR
 
 variables:
-  # SonarCloud variables (set these in pipeline variables or variable group)
-  SONAR_ORG: 'your-sonarcloud-org'
-  SONAR_PROJECT_KEY: 'Color-Craze'
+  # SonarCloud variables (set these in pipeline variables or a variable group)
+  SONAR_ORG: '$(SONARCLOUD_ORG)'
+  SONAR_PROJECT_KEY: '$(SONARCLOUD_PROJECTKEY)'
   SONAR_PROJECT_NAME: 'Color-Craze'
-  SONAR_TOKEN: '' # set securely in pipeline variables
+  SONAR_TOKEN: '$(SONARCLOUD_TOKEN)'
   MAVEN_OPTS: "-Xmx1024m"
 
 stages:
@@ -142,6 +147,23 @@ stages:
           - Frontend
         steps:
           - checkout: self
+          - task: SonarCloudPrepare@1
+            displayName: 'Prepare SonarCloud analysis'
+            inputs:
+              SonarCloud: 'SonarCloud'
+              organization: '$(SONAR_ORG)'
+              scannerMode: 'CLI'
+              configMode: 'manual'
+              cliProjectKey: '$(SONAR_PROJECT_KEY)'
+              cliProjectName: '$(SONAR_PROJECT_NAME)'
+              cliSources: 'src/main/java,frontend/src'
+              extraProperties: |
+                sonar.host.url=https://sonarcloud.io
+                sonar.coverage.jacoco.xmlReportPaths=$(System.DefaultWorkingDirectory)/**/target/site/jacoco/jacoco.xml
+                sonar.javascript.lcov.reportPaths=$(System.DefaultWorkingDirectory)/frontend/coverage/lcov.info
+                sonar.tests=src/test/java,frontend/src
+                sonar.test.inclusions=src/test/java/**/*Test.java,frontend/src/**/*.{test,spec}.{js,jsx,ts,tsx}
+                sonar.exclusions=**/node_modules/**,**/target/**,frontend/coverage/**
           - task: DownloadPipelineArtifact@2
             inputs:
               artifact: 'backend-coverage'
@@ -154,23 +176,10 @@ stages:
               path: '$(System.DefaultWorkingDirectory)/.artifacts/frontend-coverage'
             displayName: 'Descargar cobertura frontend'
 
-          - powershell: |
-              Write-Host "# SonarCloud (combined coverage)"
-              if ($env:SONAR_TOKEN -and $env:SONAR_ORG -and $env:SONAR_PROJECT_KEY -and $env:SONAR_PROJECT_NAME) {
-                $jacoco = Get-ChildItem "$(System.DefaultWorkingDirectory)/.artifacts/backend-coverage" -Recurse -Filter jacoco.xml | Select-Object -First 1
-                $lcov = Get-ChildItem "$(System.DefaultWorkingDirectory)/.artifacts/frontend-coverage" -Recurse -Filter lcov.info | Select-Object -First 1
-                if (-not $jacoco) { Write-Warning "No se encontró jacoco.xml para Sonar" }
-                if (-not $lcov) { Write-Warning "No se encontró lcov.info para Sonar" }
-                .\mvnw.cmd -B sonar:sonar `
-                  -Dsonar.organization=$(SONAR_ORG) `
-                  -Dsonar.projectKey=$(SONAR_PROJECT_KEY) `
-                  -Dsonar.projectName=$(SONAR_PROJECT_NAME) `
-                  -Dsonar.host.url=https://sonarcloud.io `
-                  -Dsonar.coverage.jacoco.xmlReportPaths=$($jacoco.FullName) `
-                  -Dsonar.javascript.lcov.reportPaths=$($lcov.FullName) `
-                  -Dsonar.qualitygate.wait=true `
-                  -Dsonar.login=$(SONAR_TOKEN)
-              } else {
-                Write-Host "SONAR variables no configuradas; saltando análisis SonarCloud"
-              }
-            displayName: 'Análisis SonarCloud (backend+frontend)'
+          - task: SonarCloudAnalyze@1
+            displayName: 'Run SonarCloud analysis'
+
+          - task: SonarCloudPublish@1
+            displayName: 'Publish SonarCloud Quality Gate'
+            inputs:
+              pollingTimeoutSec: '300'
