@@ -8,6 +8,7 @@ import org.springframework.stereotype.Controller;
 
 import com.Color_craze.board.dtos.Requests.PlayerMoveRoomMessage;
 import com.Color_craze.board.services.GameService;
+import com.Color_craze.board.services.MoveRateLimiter;
 
 import lombok.RequiredArgsConstructor;
 
@@ -17,11 +18,17 @@ public class GameSocketController {
 
     private final GameService gameService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final MoveRateLimiter rateLimiter;
 
     @MessageMapping("/move")
     public void handlePlayerMove(@Payload PlayerMoveRoomMessage moveMessage) {
         String code = moveMessage.getCode();
-        Object payload = gameService.handlePlayerMove(code, moveMessage.getPlayerId(), moveMessage.getDirection());
+        String playerId = moveMessage.getPlayerId();
+        if (!rateLimiter.allow(code, playerId)) {
+            // Drop excessive messages silently to protect game loop; optionally send 429 via a queue
+            return;
+        }
+        Object payload = gameService.handlePlayerMove(code, playerId, moveMessage.getDirection());
         if (payload instanceof java.util.Map) {
             Object success = ((java.util.Map<?,?>)payload).get("success");
             if (Boolean.TRUE.equals(success)) {
