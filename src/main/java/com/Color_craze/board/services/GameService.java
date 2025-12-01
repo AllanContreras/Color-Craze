@@ -41,12 +41,10 @@ public class GameService {
     private final SimpMessagingTemplate messagingTemplate;
     private final Random random = new SecureRandom();
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
+    private final MoveRateLimiter moveRateLimiter;
     private final ArenaService arenaService;
 
-    // Simple per-player movement rate limiter: allow up to 20 move requests per second
-    private final Map<String, RateCounter> moveRate = new java.util.concurrent.ConcurrentHashMap<>();
-
-    private static class RateCounter { long windowStartMs; int count; }
+    // Legacy simple rate counter removed; using Bucket4j via MoveRateLimiter
 
     // Configurable timings (in seconds)
     private static final long JOIN_WINDOW_SECONDS = 60; // tiempo para unirse
@@ -144,14 +142,8 @@ public class GameService {
             // Ignore moves unless the game is in PLAYING
             return null;
         }
-        // Rate limit per playerId in this room (max 20 msg/s)
-        String key = code+"|"+playerId;
-        long now = System.currentTimeMillis();
-        RateCounter rc = moveRate.computeIfAbsent(key, k -> new RateCounter());
-        if (now - rc.windowStartMs >= 1000) { rc.windowStartMs = now; rc.count = 0; }
-        rc.count++;
-        if (rc.count > 20) {
-            // Drop excessive messages silently to protect performance
+        // Rate limit per (game, player) using centralized limiter (max 20 msg/s)
+        if (!moveRateLimiter.allow(code, playerId)) {
             return Map.of("playerId", playerId, "success", false, "rateLimited", true);
         }
         // validate player exists in session

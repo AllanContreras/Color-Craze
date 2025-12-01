@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Console appender with JSON for structured logging; includes trace/span if available -->
+    <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp>
+                    <timeZone>UTC</timeZone>
+                </timestamp>
+                <pattern>
+                    <pattern>{"level":"%level","logger":"%logger{36}","thread":"%thread","message":"%replace(%msg){'"','"'}","traceId":"%X{traceId}","spanId":"%X{spanId}","gameCode":"%X{gameCode}","playerId":"%X{playerId}"}</pattern>
+                </pattern>
+                <arguments/>
+                <stackTrace>
+                    <fieldName>exception</fieldName>
+                </stackTrace>
+            </providers>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="JSON"/>
+    </root>
+</configuration>
