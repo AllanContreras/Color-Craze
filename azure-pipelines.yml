@@ -165,10 +165,11 @@ stages:
           - powershell: |
               Write-Host "== SonarCloud fallback (no tasks installed) =="
               if (-not $env:SONARCLOUD_TOKEN) { Write-Error "Falta SONARCLOUD_TOKEN"; exit 1 }
-              $jacoco = Get-ChildItem "$(System.DefaultWorkingDirectory)/.artifacts/backend-coverage" -Recurse -Filter jacoco.xml | Select-Object -First 1
-              $lcov = Get-ChildItem "$(System.DefaultWorkingDirectory)/.artifacts/frontend-coverage" -Recurse -Filter lcov.info | Select-Object -First 1
-              if (-not $jacoco) { Write-Warning "No se encontró jacoco.xml" }
-              if (-not $lcov) { Write-Warning "No se encontró lcov.info" }
+              $jacocoItem = Get-ChildItem "$(System.DefaultWorkingDirectory)/.artifacts/backend-coverage" -Recurse -Filter jacoco.xml | Select-Object -First 1
+              $lcovItem = Get-ChildItem "$(System.DefaultWorkingDirectory)/.artifacts/frontend-coverage" -Recurse -Filter lcov.info | Select-Object -First 1
+              if (-not $jacocoItem) { Write-Warning "No se encontró jacoco.xml" }
+              if (-not $lcovItem) { Write-Warning "No se encontró lcov.info" }
+
               $args = @(
                 '-B','sonar:sonar',
                 "-Dsonar.organization=$env:SONARCLOUD_ORG",
@@ -176,13 +177,19 @@ stages:
                 "-Dsonar.projectName=$env:SONARCLOUD_PROJECT_NAME",
                 '-Dsonar.host.url=https://sonarcloud.io',
                 "-Dsonar.projectVersion=$(Build.BuildNumber)",
-                ("-Dsonar.coverage.jacoco.xmlReportPaths={0}" -f ($jacoco ? $jacoco.FullName : '')),
-                ("-Dsonar.javascript.lcov.reportPaths={0}" -f ($lcov ? $lcov.FullName : '')),
-                '-Dsonar.tests=src/test/java,frontend/src',
-                '-Dsonar.test.inclusions=src/test/java/**/*Test.java,frontend/src/**/*.{test,spec}.{js,jsx,ts,tsx}',
-                '-Dsonar.exclusions=**/node_modules/**,**/target/**,frontend/coverage/**',
+                "-Dsonar.tests=src/test/java,frontend/src",
+                "-Dsonar.test.inclusions=src/test/java/**/*Test.java,frontend/src/**/*.{test,spec}.{js,jsx,ts,tsx}",
+                "-Dsonar.exclusions=**/node_modules/**,**/target/**,frontend/coverage/**",
                 "-Dsonar.login=$env:SONARCLOUD_TOKEN"
               )
+
+              if ($jacocoItem) {
+                $args += "-Dsonar.coverage.jacoco.xmlReportPaths=$($jacocoItem.FullName)"
+              }
+              if ($lcovItem) {
+                $args += "-Dsonar.javascript.lcov.reportPaths=$($lcovItem.FullName)"
+              }
+
               Write-Host "Ejecutando: mvnw $($args -join ' ')"
               & .\mvnw.cmd $args
             displayName: 'SonarCloud (mvn sonar:sonar fallback)'
