@@ -15,3 +15,11 @@ export function createStompClient(onConnect){
   client.activate()
   return client
 }
+
+// Helper used in tests to build a native ws/wss URL when needed
+// (SockJS internally uses http/https but for direct websocket code we expose this utility)
+export function createWsUrl(path){
+  const proto = (typeof window !== 'undefined' && window.location && window.location.protocol === 'https:') ? 'wss://' : 'ws://'
+  const host = (typeof window !== 'undefined' && window.location && window.location.host) ? window.location.host : 'localhost'
+  return `${proto}${host}${path}`
+}
