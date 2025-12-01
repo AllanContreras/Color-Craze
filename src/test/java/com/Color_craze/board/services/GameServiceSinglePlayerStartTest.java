@@ -37,6 +37,7 @@ class GameServiceSinglePlayerStartTest {
         messagingTemplate = mock(SimpMessagingTemplate.class);
         arenaService = mock(ArenaService.class);
         moveRateLimiter = new MoveRateLimiter();
+        meterRegistry = new io.micrometer.core.instrument.simple.SimpleMeterRegistry();
         gameService = new GameService(gameRepository, boardService, messagingTemplate, moveRateLimiter, arenaService, meterRegistry);
     }
 
