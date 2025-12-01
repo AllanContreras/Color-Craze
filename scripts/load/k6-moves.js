@@ -1,10 +1,19 @@
 import { check, sleep } from 'k6';
 import ws from 'k6/ws';
+import { Trend, Counter } from 'k6/metrics';
 
 export const options = {
   vus: 50,
-  duration: '60s'
+  duration: '60s',
+  thresholds: {
+    'move_latency{type:move}': ['p(95)<200'],
+    'rate_limited': ['count<500']
+  }
 };
+
+const moveLatency = new Trend('move_latency', true);
+const rateLimited = new Counter('rate_limited');
+const movesSent = new Counter('moves_sent');
 
 // ENV vars: BASE_URL (e.g. ws://localhost:8080), GAME_CODE, TOKEN
 const BASE = __ENV.BASE_URL || 'ws://localhost:8080';
@@ -17,14 +26,17 @@ export default function () {
 
   ws.connect(url, params, socket => {
     socket.on('open', () => {
-      // Subscribe frame (STOMP style minimal) could be added; here we spam movement endpoint via fallback REST if exposed.
+      // Fire a burst of simulated moves
       for (let i = 0; i < 40; i++) {
         // Simulate alternating moves
         const dir = i % 2 === 0 ? 'RIGHT' : 'DOWN';
+        const start = Date.now();
         try {
           socket.send(JSON.stringify({ type: 'MOVE', game: GAME, direction: dir }));
+          movesSent.add(1);
         } catch (e) {}
         sleep(0.05); // 50ms between moves
+        moveLatency.add(Date.now() - start, { type: 'move' });
       }
     });
     socket.on('message', msg => {
@@ -32,7 +44,7 @@ export default function () {
       try {
         const data = JSON.parse(msg);
         if (data.success === false && data.rateLimited) {
-          // Count rate limited events
+          rateLimited.add(1);
         }
       } catch (_) {}
     });
@@ -41,4 +53,10 @@ export default function () {
     sleep(1);
     socket.close();
   });
+}
+
+export function handleSummary(data) {
+  return {
+    'summary.json': JSON.stringify(data),
+  };
 }

@@ -345,6 +345,8 @@ public class GameService {
         // schedule end in 40 seconds
         scheduler.schedule(() -> endGame(gs.getCode()), GAME_DURATION_SECONDS, TimeUnit.SECONDS);
         meterRegistry.counter("game.rooms.started").increment();
+        // increment active gauge if present
+        incrementActiveRooms();
     }
 
     public void updatePlayer(String code, UpdatePlayerRequest req) {
@@ -414,6 +416,12 @@ public class GameService {
         messagingTemplate.convertAndSend(String.format("/topic/board/%s/end", code), Map.of("code", code, "standings", standings));
         try { arenaService.stopGame(code); } catch (Exception ignored) {}
         meterRegistry.counter("game.rooms.ended").increment();
+        // record session duration metric
+        if (gs.getStartedAt() != null && gs.getFinishedAt() != null) {
+            long durationMs = gs.getFinishedAt().toEpochMilli() - gs.getStartedAt().toEpochMilli();
+            meterRegistry.summary("game.session.duration.ms").record(durationMs);
+        }
+        decrementActiveRooms();
     }
 
     public void restartGame(String code) {
@@ -490,5 +498,17 @@ public class GameService {
         StringBuilder sb = new StringBuilder(len);
         for (int i = 0; i < len; i++) sb.append(ALPHANUM.charAt(random.nextInt(ALPHANUM.length())));
         return sb.toString();
+    }
+
+    // Active rooms gauge backing variable
+    private static final java.util.concurrent.atomic.AtomicInteger ACTIVE_ROOMS = new java.util.concurrent.atomic.AtomicInteger(0);
+    private void incrementActiveRooms() {
+        if (meterRegistry.find("game.rooms.active").gauge() == null) {
+            meterRegistry.gauge("game.rooms.active", ACTIVE_ROOMS);
+        }
+        ACTIVE_ROOMS.incrementAndGet();
+    }
+    private void decrementActiveRooms() {
+        ACTIVE_ROOMS.updateAndGet(v -> v > 0 ? v - 1 : 0);
     }
 }
