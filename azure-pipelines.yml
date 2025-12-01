@@ -95,18 +95,17 @@ stages:
 
           - powershell: |
               Set-Location frontend
-              if (Test-Path package.json) {
-                $pkg = Get-Content package.json -Raw | ConvertFrom-Json
-                if ($pkg.scripts -and $pkg.scripts.test) {
-                  try {
-                    npm test -- --coverage
-                  } catch {
-                    Write-Warning "Tests fallaron; continuando como opcional"
-                  }
-                } else {
-                  Write-Host "Sin tests configurados (Vitest/Jest)"
-                }
-              } else {
-                Write-Host "Sin package.json"
+              npm ci
+              try {
+                npm test
+              } catch {
+                Write-Warning "Tests frontend fallaron; continuando como opcional"
               }
-            displayName: 'Tests frontend (opcional)'
+              # Publicar cobertura lcov si existe
+              if (Test-Path .\coverage\lcov.info) {
+                Write-Host "Encontrado coverage lcov; subiendo como Artifact"
+                Write-Host "##vso[task.uploadfile]coverage/lcov.info"
+              } else {
+                Write-Host "No se encontró coverage/lcov.info"
+              }
+            displayName: 'Tests frontend (Vitest)'
