@@ -1,10 +1,12 @@
 // Simple STOMP relay smoke test: subscribe and publish to verify broker relay across instances
-// Usage: node scripts/smoke/stomp-relay-check.js http://<backend-host>:8080 <roomCode>
+// Usage: node scripts/smoke/stomp-relay-check.js "http://backend-host:8080" ROOMCODE
 
-import SockJS from 'sockjs-client'
-import { Client } from '@stomp/stompjs'
+const SockJS = require('sockjs-client')
+const { Client } = require('@stomp/stompjs')
 
-const [,, baseUrl, roomCode] = process.argv
+const args = process.argv.slice(2)
+const baseUrl = args[0]
+const roomCode = args[1]
 if (!baseUrl || !roomCode) {
   console.error('Usage: node scripts/smoke/stomp-relay-check.js <baseUrl> <roomCode>')
   process.exit(1)
