@@ -35,13 +35,20 @@ public class StompAuthInterceptor implements ChannelInterceptor {
         if (cmd == StompCommand.CONNECT || cmd == StompCommand.SUBSCRIBE) {
             String auth = sha.getFirstNativeHeader("Authorization");
             String username = null;
-            if (auth != null && auth.startsWith("Bearer ") && jwtService != null) {
-                String token = auth.substring(7);
-                try {
-                    username = jwtService.extractUsername(token);
-                } catch (Exception ignore) {
-                    // invalid token: block if strict
+            if (jwtService == null) {
+                throw new IllegalStateException("Authorization service unavailable");
+            }
+            if (auth == null || !auth.startsWith("Bearer ")) {
+                throw new IllegalStateException("Unauthorized: missing Bearer token");
+            }
+            String token = auth.substring(7);
+            try {
+                username = jwtService.extractUsername(token);
+                if (!jwtService.isTokenValid(token, null)) { // validation against user details is handled elsewhere
+                    throw new IllegalStateException("Unauthorized: invalid token");
                 }
+            } catch (Exception ex) {
+                throw new IllegalStateException("Unauthorized: token error");
             }
 
             // Validate subscription destination and room membership
@@ -55,8 +62,8 @@ public class StompAuthInterceptor implements ChannelInterceptor {
                 if (parts.length < 2) throw new IllegalArgumentException("Missing room code");
                 String tail = parts[1];
                 String code = tail.split("/")[0];
-                // If username is known (JWT provided), ensure user is part of the game session
-                if (username != null && code != null) {
+                // Ensure user is part of the game session
+                if (code != null) {
                     final String uname = username; // make effectively final for lambda use
                     var opt = gameRepository.findByCode(code);
                     if (opt.isPresent()) {
