@@ -57,24 +57,12 @@ stages:
               reportDirectory: '$(System.DefaultWorkingDirectory)/**/target/site/jacoco'
             displayName: 'Publicar cobertura (JaCoCo)'
 
-          - powershell: |
-              Write-Host "# SonarCloud"
-              if ($env:SONAR_TOKEN -and $env:SONAR_ORG -and $env:SONAR_PROJECT_KEY -and $env:SONAR_PROJECT_NAME) {
-                # Ejecutar análisis después de verify para incluir reporte JaCoCo
-                $jacoco = Get-ChildItem -Recurse -Filter jacoco.xml | Select-Object -First 1
-                if (-not $jacoco) { Write-Warning "No se encontró jacoco.xml antes del análisis" }
-                .\mvnw.cmd -B sonar:sonar `
-                  -Dsonar.organization=$(SONAR_ORG) `
-                  -Dsonar.projectKey=$(SONAR_PROJECT_KEY) `
-                  -Dsonar.projectName=$(SONAR_PROJECT_NAME) `
-                  -Dsonar.host.url=https://sonarcloud.io `
-                  -Dsonar.coverage.jacoco.xmlReportPaths=$(System.DefaultWorkingDirectory)/target/site/jacoco/jacoco.xml `
-                  -Dsonar.qualitygate.wait=true `
-                  -Dsonar.login=$(SONAR_TOKEN)
-              } else {
-                Write-Host "SONAR variables no configuradas; saltando análisis SonarCloud"
-              }
-            displayName: 'Análisis SonarCloud (backend)'
+          - task: PublishPipelineArtifact@1
+            inputs:
+              targetPath: '$(System.DefaultWorkingDirectory)/target/site/jacoco'
+              artifact: 'backend-coverage'
+              publishLocation: 'pipeline'
+            displayName: 'Publicar artefacto cobertura backend (JaCoCo)'
 
       - job: Frontend
         displayName: Frontend (Node + Vite)
@@ -131,3 +119,50 @@ stages:
                 Write-Host "No se encontró coverage/lcov.info"
               }
             displayName: 'Tests frontend (Vitest)'
+
+          - task: PublishPipelineArtifact@1
+            inputs:
+              targetPath: '$(System.DefaultWorkingDirectory)/frontend/coverage'
+              artifact: 'frontend-coverage'
+              publishLocation: 'pipeline'
+            displayName: 'Publicar artefacto cobertura frontend (HTML & lcov)'
+
+      - job: Analyze
+        displayName: SonarCloud Analyze (merge coverage)
+        dependsOn:
+          - Backend
+          - Frontend
+        steps:
+          - checkout: self
+          - task: DownloadPipelineArtifact@2
+            inputs:
+              artifact: 'backend-coverage'
+              path: '$(System.DefaultWorkingDirectory)/.artifacts/backend-coverage'
+            displayName: 'Descargar cobertura backend'
+
+          - task: DownloadPipelineArtifact@2
+            inputs:
+              artifact: 'frontend-coverage'
+              path: '$(System.DefaultWorkingDirectory)/.artifacts/frontend-coverage'
+            displayName: 'Descargar cobertura frontend'
+
+          - powershell: |
+              Write-Host "# SonarCloud (combined coverage)"
+              if ($env:SONAR_TOKEN -and $env:SONAR_ORG -and $env:SONAR_PROJECT_KEY -and $env:SONAR_PROJECT_NAME) {
+                $jacoco = Get-ChildItem "$(System.DefaultWorkingDirectory)/.artifacts/backend-coverage" -Recurse -Filter jacoco.xml | Select-Object -First 1
+                $lcov = Get-ChildItem "$(System.DefaultWorkingDirectory)/.artifacts/frontend-coverage" -Recurse -Filter lcov.info | Select-Object -First 1
+                if (-not $jacoco) { Write-Warning "No se encontró jacoco.xml para Sonar" }
+                if (-not $lcov) { Write-Warning "No se encontró lcov.info para Sonar" }
+                .\mvnw.cmd -B sonar:sonar `
+                  -Dsonar.organization=$(SONAR_ORG) `
+                  -Dsonar.projectKey=$(SONAR_PROJECT_KEY) `
+                  -Dsonar.projectName=$(SONAR_PROJECT_NAME) `
+                  -Dsonar.host.url=https://sonarcloud.io `
+                  -Dsonar.coverage.jacoco.xmlReportPaths=$($jacoco.FullName) `
+                  -Dsonar.javascript.lcov.reportPaths=$($lcov.FullName) `
+                  -Dsonar.qualitygate.wait=true `
+                  -Dsonar.login=$(SONAR_TOKEN)
+              } else {
+                Write-Host "SONAR variables no configuradas; saltando análisis SonarCloud"
+              }
+            displayName: 'Análisis SonarCloud (backend+frontend)'
