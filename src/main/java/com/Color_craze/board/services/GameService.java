@@ -475,6 +475,7 @@ public class GameService {
         // Clear saved platforms snapshot
         gs.getPlatforms().clear();
         gameRepository.save(gs);
+        try { if (snapshotService != null) { snapshotService.deleteBoard(code); snapshotService.save(code, new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(gs)); } } catch (Exception ignored) {}
 
         // Reset the in-memory board
         boardService.resetBoard(code);
