@@ -44,6 +44,8 @@ public class GameService {
     private final MoveRateLimiter moveRateLimiter;
     private final ArenaService arenaService;
     private final io.micrometer.core.instrument.MeterRegistry meterRegistry;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private GameStateSnapshotService snapshotService;
 
     // Legacy simple rate counter removed; using Bucket4j via MoveRateLimiter
 
@@ -64,6 +66,8 @@ public class GameService {
         // Assign a random theme at room creation so everyone sees the same style
         gs.setTheme(pickRandomTheme());
         gameRepository.save(gs);
+        // Persist initial snapshot (WAITING)
+        try { if (snapshotService != null) snapshotService.save(code, new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(gs)); } catch (Exception ignored) {}
         // Publicar estado inicial de WAITING (para countdown en clientes)
         Map<String, Object> waiting = Map.of(
             "code", code,
@@ -170,6 +174,23 @@ public class GameService {
     // persist platform state snapshot
     gs.setPlatforms(boardService.exportPlatformStates(code));
     gameRepository.save(gs);
+        // Save updated board snapshot after move
+        try { if (snapshotService != null) {
+            var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            java.util.Map<String, Object> snapshot = new java.util.HashMap<>();
+            var b2 = boardService.getOrCreateBoard(code);
+            var pos2 = b2.getPlayers().entrySet().stream()
+                .map(e -> java.util.Map.of(
+                    "playerId", e.getKey().toString(),
+                    "row", e.getValue().getRow(),
+                    "col", e.getValue().getCol(),
+                    "color", e.getValue().getColor().name()
+                ))
+                .collect(java.util.stream.Collectors.toList());
+            snapshot.put("positions", pos2);
+            snapshot.put("platforms", gs.getPlatforms());
+            snapshotService.saveBoard(code, mapper.writeValueAsString(snapshot));
+        } } catch (Exception ignored) {}
 
         // Build a client-friendly payload with original playerIds as strings
         java.util.List<Map<String, Object>> platforms = new java.util.ArrayList<>();
@@ -298,6 +319,7 @@ public class GameService {
         gs.setStatus("PLAYING");
         gs.setStartedAt(Instant.now());
         gameRepository.save(gs);
+        try { if (snapshotService != null) snapshotService.save(code, new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(gs)); } catch (Exception ignored) {}
 
         // publish initial state with positions
         var board = boardService.getOrCreateBoard(code);
@@ -347,6 +369,17 @@ public class GameService {
         meterRegistry.counter("game.rooms.started").increment();
         // increment active gauge if present
         incrementActiveRooms();
+
+        // Save initial board snapshot (positions + platforms) for recovery
+        try {
+            if (snapshotService != null) {
+                var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                java.util.Map<String, Object> snapshot = new java.util.HashMap<>();
+                snapshot.put("positions", positions);
+                snapshot.put("platforms", gs.getPlatforms());
+                snapshotService.saveBoard(code, mapper.writeValueAsString(snapshot));
+            }
+        } catch (Exception ignored) {}
     }
 
     public void updatePlayer(String code, UpdatePlayerRequest req) {
@@ -371,6 +404,7 @@ public class GameService {
         }
 
         gameRepository.save(gs);
+            try { if (snapshotService != null) snapshotService.save(code, new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(gs)); } catch (Exception ignored) {}
 
         // Notify WAITING state with updated players
         Map<String, Object> waiting = Map.of(
@@ -408,6 +442,7 @@ public class GameService {
         gs.setFinishedAt(Instant.now());
         // calculate results (already in scores) - no-op here
         gameRepository.save(gs);
+        try { if (snapshotService != null) snapshotService.save(code, new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(gs)); } catch (Exception ignored) {}
         // publish final standings
         var standings = gs.getPlayers().stream()
             .sorted(Comparator.comparingInt(p -> -p.score))
@@ -416,6 +451,8 @@ public class GameService {
         messagingTemplate.convertAndSend(String.format("/topic/board/%s/end", code), Map.of("code", code, "standings", standings));
         try { arenaService.stopGame(code); } catch (Exception ignored) {}
         meterRegistry.counter("game.rooms.ended").increment();
+        // cleanup board snapshot storage
+        try { if (snapshotService != null) { snapshotService.deleteBoard(code); } } catch (Exception ignored) {}
         // record session duration metric
         if (gs.getStartedAt() != null && gs.getFinishedAt() != null) {
             long durationMs = gs.getFinishedAt().toEpochMilli() - gs.getStartedAt().toEpochMilli();
