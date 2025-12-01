@@ -122,9 +122,10 @@ stages:
                 Write-Warning "Tests frontend fallaron; continuando como opcional"
               }
               # Publicar cobertura lcov si existe
-              if (Test-Path .\coverage\lcov.info) {
+              $lcovPath = "$(System.DefaultWorkingDirectory)\frontend\coverage\lcov.info"
+              if (Test-Path $lcovPath) {
                 Write-Host "Encontrado coverage lcov; subiendo como Artifact"
-                Write-Host "##vso[task.uploadfile]coverage/lcov.info"
+                Write-Host "##vso[task.uploadfile]$lcovPath"
               } else {
                 Write-Host "No se encontró coverage/lcov.info"
               }
