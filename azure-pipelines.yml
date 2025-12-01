@@ -120,28 +120,11 @@ stages:
               }
             displayName: 'Tests frontend (Vitest)'
 
-          - powershell: |
-              Set-Location frontend
-              $lcov = "coverage/lcov.info"
-              if (Test-Path $lcov) {
-                Write-Host "Convirtiendo lcov a Cobertura para Azure DevOps"
-                npm install --no-fund --no-audit lcov-to-cobertura-xml@latest
-                npx lcov-to-cobertura-xml $lcov -o coverage/cobertura.xml
-                if (Test-Path "coverage/cobertura.xml") {
-                  Write-Host "Cobertura.xml generado"
-                } else {
-                  Write-Warning "Cobertura.xml no se generó"
-                }
-              } else {
-                Write-Warning "No hay lcov.info; saltando conversión"
-              }
-            displayName: 'Convertir lcov a Cobertura'
-
           - task: PublishCodeCoverageResults@1
             condition: succeededOrFailed()
             inputs:
               codeCoverageTool: 'Cobertura'
-              summaryFileLocation: '$(System.DefaultWorkingDirectory)/frontend/coverage/cobertura.xml'
+              summaryFileLocation: '$(System.DefaultWorkingDirectory)/frontend/coverage/cobertura-coverage.xml'
               reportDirectory: '$(System.DefaultWorkingDirectory)/frontend/coverage'
             displayName: 'Publicar cobertura frontend (Cobertura)'
 
