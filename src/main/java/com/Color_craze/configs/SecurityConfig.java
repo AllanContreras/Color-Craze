@@ -14,6 +14,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.core.env.Environment;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -35,6 +38,7 @@ public class SecurityConfig {
         http
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/admin/**").hasRole("ADMIN")
                 .anyRequest().permitAll())
             .authenticationProvider(authenticationProvider())
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
@@ -61,5 +65,18 @@ public class SecurityConfig {
     @ConditionalOnProperty(name = "spring.data.mongodb.uri", matchIfMissing = false)
     AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
+    }
+
+    // Optional in-memory admin for local ops, enabled when admin.user is set
+    @Bean
+    @ConditionalOnProperty(name = "admin.user")
+    InMemoryUserDetailsManager inMemoryAdmin(Environment env, PasswordEncoder encoder) {
+        String user = env.getProperty("admin.user");
+        String pass = env.getProperty("admin.pass", "changeme");
+        var admin = User.withUsername(user)
+            .password(encoder.encode(pass))
+            .roles("ADMIN")
+            .build();
+        return new InMemoryUserDetailsManager(admin);
     }
 }
