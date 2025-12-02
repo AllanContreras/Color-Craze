@@ -1,9 +1,11 @@
 package com.Color_craze.configs;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RegexRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
@@ -15,6 +17,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+@Profile("test") // Solo activa esta configuración en el perfil 'test'
 public class TestSecurityConfig {
 
     @Bean("testSecurityFilterChain")
@@ -26,7 +29,7 @@ public class TestSecurityConfig {
                 new RegexRequestMatcher("^/api/test/.*", null),
                 new RegexRequestMatcher("^/actuator/.*", null)
             ))
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .cors(Customizer.withDefaults())
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/test/**").permitAll()
@@ -37,16 +40,5 @@ public class TestSecurityConfig {
         return http.build();
     }
 
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("*"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("*"));
-        configuration.setAllowCredentials(true);
-        
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
+    // Se omite la definición de CorsConfigurationSource aquí para no duplicar el bean
 }
