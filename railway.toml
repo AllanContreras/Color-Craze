@@ -6,8 +6,8 @@ providers = ["java"]
 
 [deploy]
 startCommand = "java -jar target/Color-craze-0.0.1-SNAPSHOT.jar"
-# Usar un healthcheck que no dependa de Mongo mientras se habilita la red en Atlas
-healthcheckPath = "/api/test/health"
+# Healthcheck estándar de Actuator
+healthcheckPath = "/actuator/health"
 healthcheckTimeout = 300
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 10

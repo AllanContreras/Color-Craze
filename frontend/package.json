@@ -6,7 +6,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "start": "vite build && vite preview --port 3000 --host",
+    "start": "vite build && vite preview --port ${PORT:-4173} --host 0.0.0.0",
     "test": "vitest run --coverage"
   },
   "dependencies": {
