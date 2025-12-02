@@ -1,6 +1,10 @@
 [build]
 builder = "nixpacks"
 
+[build.nixpacksConfig]
+# Use npm install to update lockfile when dependencies change
+installCommand = "npm install"
+
 [deploy]
 startCommand = "npx serve -s dist -l $PORT"
 healthcheckPath = "/"
