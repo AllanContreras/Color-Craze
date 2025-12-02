@@ -23,6 +23,7 @@
     "@vitest/coverage-v8": "1.6.0",
     "jsdom": "22.1.0",
     "@testing-library/react": "14.2.1",
-    "@testing-library/dom": "10.4.0"
+    "@testing-library/dom": "10.4.0",
+    "serve": "14.2.0"
   }
 }
