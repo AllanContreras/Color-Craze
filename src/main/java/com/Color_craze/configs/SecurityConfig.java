@@ -33,7 +33,8 @@ public class SecurityConfig {
                     "/api/auth/login",
                     "/api/auth/register",
                     "/api/auth/refresh",
-                    "/api/auth/guest-token"
+                    "/api/auth/guest-token",
+                    "/api/auth/guest"
                 ).permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
