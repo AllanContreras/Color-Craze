@@ -7,11 +7,14 @@ const WS_URL = import.meta.env.VITE_WS_URL || 'http://localhost:8080'
 // Basic STOMP client with reconnect support
 export function createStompClient(onConnect){
   const socketFactory = () => new SockJS(`${WS_URL}/color-craze/ws`)
+  const token = (typeof window !== 'undefined') ? window.localStorage.getItem('token') : null
+
   const client = new Client({
     webSocketFactory: socketFactory,
     debug: (m) => console.log('[STOMP]', m),
     // Reconnect after delay when connection drops
     reconnectDelay: 5000,
+    connectHeaders: token ? { Authorization: `Bearer ${token}` } : {},
   })
 
   client.onConnect = () => {
@@ -25,19 +28,24 @@ export function createStompClient(onConnect){
 // Managed STOMP client: caches subscriptions and re-subscribes on reconnect
 export function createManagedStompClient(){
   const socketFactory = () => new SockJS(`${WS_URL}/color-craze/ws`)
+  const token = (typeof window !== 'undefined') ? window.localStorage.getItem('token') : null
+  const baseHeaders = token ? { Authorization: `Bearer ${token}` } : {}
+
   const client = new Client({
     webSocketFactory: socketFactory,
     debug: (m) => console.log('[STOMP]', m),
     reconnectDelay: 3000,
+    connectHeaders: baseHeaders,
   })
 
   // Store subscription requests to replay after reconnect
   const subscriptions = []
 
   const subscribe = (destination, callback, headers = {}) => {
-    subscriptions.push({ destination, callback, headers })
+    const mergedHeaders = { ...baseHeaders, ...headers }
+    subscriptions.push({ destination, callback, headers: mergedHeaders })
     if (client.connected) {
-      return client.subscribe(destination, callback, headers)
+      return client.subscribe(destination, callback, mergedHeaders)
     }
     return { unsubscribe: () => {} }
   }
@@ -65,7 +73,7 @@ export function createManagedStompClient(){
   return {
     client,
     subscribe,
-    publish: (destination, body, headers = {}) => client.publish({ destination, body, headers }),
+    publish: (destination, body, headers = {}) => client.publish({ destination, body, headers: { ...baseHeaders, ...headers } }),
     disconnect: () => client.deactivate(),
   }
 }

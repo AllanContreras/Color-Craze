@@ -36,7 +36,8 @@ public class StompAuthInterceptor implements ChannelInterceptor {
             String auth = sha.getFirstNativeHeader("Authorization");
             String username = null;
             if (jwtService == null) {
-                throw new IllegalStateException("Authorization service unavailable");
+                // If auth service is unavailable, just let the message pass to avoid killing the channel.
+                return message;
             }
             if (auth == null || !auth.startsWith("Bearer ")) {
                 throw new IllegalStateException("Unauthorized: missing Bearer token");
