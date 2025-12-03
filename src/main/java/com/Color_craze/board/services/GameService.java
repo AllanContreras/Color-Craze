@@ -46,6 +46,8 @@ public class GameService {
     private final io.micrometer.core.instrument.MeterRegistry meterRegistry;
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private org.springframework.data.redis.core.StringRedisTemplate redis;
+    @org.springframework.beans.factory.annotation.Value("${app.redis.enabled:false}")
+    private boolean redisEnabled;
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private GameStateSnapshotService snapshotService;
 
@@ -196,7 +198,7 @@ public class GameService {
 
         // Persist live state to Redis for multi-instance continuity (optional)
         try {
-            if (redis != null) {
+            if (redisEnabled && redis != null) {
                 var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
                 java.util.Map<String, Object> live = new java.util.HashMap<>();
                 live.put("game", Map.of(
