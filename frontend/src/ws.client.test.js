@@ -29,13 +29,13 @@ describe('createStompClient', () => {
     localStorage.clear()
   })
 
-  it('sets Authorization header when token present', () => {
+  it('sets Authorization header when token present', async () => {
     localStorage.setItem('token', 't123')
     const onConnect = vi.fn()
     const client = createStompClient(onConnect)
     expect(onConnect).toHaveBeenCalled()
     // Verify Client was constructed with connectHeaders containing Authorization
-    const Client = (await import('@stomp/stompjs')).Client
+    const { Client } = await import('@stomp/stompjs')
     const call = Client.mock.calls[0][0]
     expect(call.connectHeaders.Authorization).toBe('Bearer t123')
     expect(client).toBeTruthy()
@@ -44,7 +44,7 @@ describe('createStompClient', () => {
   it('does not set Authorization when token missing', async () => {
     const onConnect = vi.fn()
     createStompClient(onConnect)
-    const Client = (await import('@stomp/stompjs')).Client
+    const { Client } = await import('@stomp/stompjs')
     const call = Client.mock.calls[Client.mock.calls.length - 1][0]
     expect(call.connectHeaders).toEqual({})
   })
