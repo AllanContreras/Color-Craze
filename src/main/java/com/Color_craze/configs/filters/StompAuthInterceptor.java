@@ -52,6 +52,26 @@ public class StompAuthInterceptor implements ChannelInterceptor {
                 lastConnectBySession.put(sessionId, now);
                 log.info("ws_event=CONNECT session={}", sessionId);
             }
+
+            // Enforce JWT on CONNECT when JwtService is available
+            String auth = sha.getFirstNativeHeader("Authorization");
+            if (jwtService != null) {
+                boolean valid = false;
+                if (auth != null && auth.startsWith("Bearer ")) {
+                    String token = auth.substring(7);
+                    try {
+                        // We only check that token parses and is not expired
+                        String username = jwtService.extractUsername(token);
+                        valid = (username != null && !username.isBlank());
+                    } catch (Exception ex) {
+                        valid = false;
+                    }
+                }
+                if (!valid) {
+                    log.warn("ws_event=REJECT_CONNECT reason=invalid_or_missing_token session={}", sessionId);
+                    return null; // Reject CONNECT
+                }
+            }
         }
 
         // Rate limit SEND and MESSAGE frames per session
