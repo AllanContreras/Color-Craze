@@ -74,8 +74,8 @@ public class StompAuthInterceptor implements ChannelInterceptor {
             }
         }
 
-        // Rate limit SEND and MESSAGE frames per session
-        if (cmd == StompCommand.SEND || cmd == StompCommand.MESSAGE) {
+        // Rate limit only client SEND frames per session (do not drop server MESSAGE frames)
+        if (cmd == StompCommand.SEND) {
             String sessionId = sha.getSessionId();
             if (sessionId != null) {
                 WindowCounter counter = sendCounters.computeIfAbsent(sessionId, k -> new WindowCounter());
@@ -85,9 +85,7 @@ public class StompAuthInterceptor implements ChannelInterceptor {
                     // Drop the message when rate limit exceeded
                     return null;
                 }
-                if (cmd == StompCommand.SEND) {
-                    log.debug("ws_event=SEND session={} dest={}", sessionId, sha.getDestination());
-                }
+                log.debug("ws_event=SEND session={} dest={}", sessionId, sha.getDestination());
             }
         }
 
