@@ -101,6 +101,17 @@ export default function Game(){
           }
         } catch {}
       })
+      // Just after CONNECT + subscriptions, fetch positions once to avoid any delay before first state arrives
+      api.get(`/api/games/${code}`).then(res => {
+        if (Array.isArray(res.data?.playerPositions)){
+          const cells = {}
+          for (const pos of res.data.playerPositions){
+            const key = `${pos.row},${pos.col}`
+            cells[key] = { playerId: pos.playerId, color: colorToHex(pos.color) }
+          }
+          setPlayerCells(cells)
+        }
+      }).catch(() => {})
     })
     setClient(c)
     return ()=> c.deactivate()
@@ -178,6 +189,22 @@ export default function Game(){
               cells[key] = { playerId: pos.playerId, color: colorToHex(pos.color) }
             }
             setPlayerCells(cells)
+          } else {
+            // If PLAYING but GET did not yet include positions, schedule a quick retry
+            setTimeout(() => {
+              if (!playerCells || Object.keys(playerCells).length === 0){
+                api.get(`/api/games/${code}`).then(r2 => {
+                  if (Array.isArray(r2.data?.playerPositions)){
+                    const cells2 = {}
+                    for (const pos of r2.data.playerPositions){
+                      const key = `${pos.row},${pos.col}`
+                      cells2[key] = { playerId: pos.playerId, color: colorToHex(pos.color) }
+                    }
+                    setPlayerCells(cells2)
+                  }
+                }).catch(() => {})
+              }
+            }, 1200)
           }
           // Arena config via GET (mid-game refresh)
           if (res.data.arena){ setArenaMode(true); setArenaConfig(res.data.arena) }
