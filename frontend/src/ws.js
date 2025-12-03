@@ -1,13 +1,33 @@
 import SockJS from 'sockjs-client'
 import { Client } from '@stomp/stompjs'
 
-// Use environment variable or fallback to localhost for development
-const WS_URL = import.meta.env.VITE_WS_URL || 'http://localhost:8080'
+// Resolve WS base URL
+function resolveWsBase() {
+  const envUrl = import.meta.env.VITE_WS_URL
+  if (envUrl) return envUrl
+  if (import.meta.env.PROD && typeof window !== 'undefined' && window.location) {
+    return window.location.origin
+  }
+  return 'http://localhost:8080'
+}
+
+function readToken() {
+  if (typeof window === 'undefined') return null
+  // Try common keys to avoid mismatches
+  return (
+    window.localStorage.getItem('cc_token') ||
+    window.localStorage.getItem('token') ||
+    window.localStorage.getItem('jwt') ||
+    null
+  )
+}
+
+const WS_URL = resolveWsBase()
 
 // Basic STOMP client with reconnect support
 export function createStompClient(onConnect){
   const socketFactory = () => new SockJS(`${WS_URL}/color-craze/ws`)
-  const token = (typeof window !== 'undefined') ? window.localStorage.getItem('token') : null
+  const token = readToken()
 
   const client = new Client({
     webSocketFactory: socketFactory,
@@ -31,7 +51,7 @@ export function createStompClient(onConnect){
 // Managed STOMP client: caches subscriptions and re-subscribes on reconnect
 export function createManagedStompClient(){
   const socketFactory = () => new SockJS(`${WS_URL}/color-craze/ws`)
-  const token = (typeof window !== 'undefined') ? window.localStorage.getItem('token') : null
+  const token = readToken()
   const baseHeaders = token ? { Authorization: `Bearer ${token}` } : {}
 
   const client = new Client({
