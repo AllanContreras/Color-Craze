@@ -162,7 +162,7 @@ stages:
               artifact: 'frontend-coverage'
               path: '$(System.DefaultWorkingDirectory)/.artifacts/frontend-coverage'
             displayName: 'Descargar cobertura frontend'
-            - powershell: |
+          - powershell: |
               Write-Host "== SonarCloud fallback (no tasks installed) =="
               # Usar SONAR_TOKEN ya definido en variables del pipeline
               if (-not $env:SONAR_TOKEN) { Write-Error "Falta SONAR_TOKEN"; exit 1 }
