@@ -50,7 +50,7 @@ public class AuthServiceRefreshTest {
 
         assertEquals("newAccess", resp.token());
         assertEquals("newRefresh", resp.refreshToken());
-        assertEquals(email, resp.user().email());
+        assertEquals(email, resp.userData().email());
     }
 
     @Test
