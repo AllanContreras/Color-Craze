@@ -4,19 +4,21 @@ import { createStompClient } from './ws'
 // Mock @stomp/stompjs Client
 vi.mock('@stomp/stompjs', () => {
   return {
-    Client: vi.fn().mockImplementation((opts) => {
-      return {
+    Client: vi.fn().mockImplementation(() => {
+      const client = {
         connected: false,
+        onConnect: undefined,
         activate: vi.fn(() => {
-          // simulate immediate connect
-          if (opts && typeof opts.onConnect === 'function') {
-            opts.onConnect()
+          // simulate immediate connect invoking assigned handler
+          if (typeof client.onConnect === 'function') {
+            client.onConnect()
           }
         }),
         subscribe: vi.fn(),
         publish: vi.fn(),
         deactivate: vi.fn(),
       }
+      return client
     }),
   }
 })
