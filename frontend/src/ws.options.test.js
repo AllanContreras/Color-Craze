@@ -16,9 +16,9 @@ vi.mock('@stomp/stompjs', () => {
 vi.mock('sockjs-client', () => ({ default: vi.fn(() => ({}) ) }))
 
 describe('ws client options', () => {
-  it('sets heartbeat and reconnect options', () => {
-    const c = createStompClient(() => {})
-    const { Client } = require('@stomp/stompjs')
+  it('sets heartbeat and reconnect options', async () => {
+    createStompClient(() => {})
+    const { Client } = await import('@stomp/stompjs')
     const args = Client.mock.calls[0][0]
     expect(args.reconnectDelay).toBe(2000)
     expect(args.heartbeatIncoming).toBe(5000)
