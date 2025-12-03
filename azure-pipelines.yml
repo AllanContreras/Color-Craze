@@ -196,7 +196,8 @@ stages:
               }
 
               Write-Host "Ejecutando: mvnw $($args -join ' ')"
-              & .\mvnw.cmd $args
+              $proc = Start-Process -FilePath ".\mvnw.cmd" -ArgumentList $args -NoNewWindow -Wait -PassThru
+              if ($proc.ExitCode -ne 0) { Write-Error "mvnw exited with code $($proc.ExitCode)"; exit $proc.ExitCode }
             displayName: 'SonarCloud (mvn sonar:sonar fallback)'
             env:
               SONAR_TOKEN: $(SONAR_TOKEN)
