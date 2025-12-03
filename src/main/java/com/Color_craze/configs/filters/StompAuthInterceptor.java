@@ -13,11 +13,13 @@ import org.springframework.stereotype.Component;
 
 import com.Color_craze.auth.services.JwtService;
 import com.Color_craze.board.repositories.GameRepository;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * STOMP interceptor: validates Authorization (JWT) and room code membership on SUBSCRIBE/CONNECT.
  */
 @Component
+@Slf4j
 public class StompAuthInterceptor implements ChannelInterceptor {
 
     private final Map<String, Long> lastConnectBySession = new ConcurrentHashMap<>();
@@ -48,6 +50,7 @@ public class StompAuthInterceptor implements ChannelInterceptor {
                     // For now, we simply update the timestamp without throwing.
                 }
                 lastConnectBySession.put(sessionId, now);
+                log.info("ws_event=CONNECT session={}", sessionId);
             }
         }
 
@@ -58,10 +61,24 @@ public class StompAuthInterceptor implements ChannelInterceptor {
                 WindowCounter counter = sendCounters.computeIfAbsent(sessionId, k -> new WindowCounter());
                 boolean allowed = counter.incrementAndCheck(MAX_MSGS_PER_SECOND);
                 if (!allowed) {
+                    log.warn("ws_event=DROP_RATE_LIMIT session={} dest={} max_per_sec={}", sessionId, sha.getDestination(), MAX_MSGS_PER_SECOND);
                     // Drop the message when rate limit exceeded
                     return null;
                 }
+                if (cmd == StompCommand.SEND) {
+                    log.debug("ws_event=SEND session={} dest={}", sessionId, sha.getDestination());
+                }
             }
+        }
+
+        if (cmd == StompCommand.SUBSCRIBE) {
+            String sessionId = sha.getSessionId();
+            log.info("ws_event=SUBSCRIBE session={} dest={}", sessionId, sha.getDestination());
+        }
+
+        if (cmd == StompCommand.DISCONNECT) {
+            String sessionId = sha.getSessionId();
+            log.info("ws_event=DISCONNECT session={}", sessionId);
         }
 
         return message;
