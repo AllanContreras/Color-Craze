@@ -164,8 +164,12 @@ stages:
             displayName: 'Descargar cobertura frontend'
           - powershell: |
               Write-Host "== SonarCloud fallback (no tasks installed) =="
-              # Usar SONAR_TOKEN ya definido en variables del pipeline
-              if (-not $env:SONAR_TOKEN) { Write-Error "Falta SONAR_TOKEN"; exit 1 }
+              # Preferir SONAR_TOKEN; si no existe, usar SONARCLOUD_TOKEN como respaldo
+              if (-not $env:SONAR_TOKEN -and $env:SONARCLOUD_TOKEN) {
+                Write-Host "SONAR_TOKEN no definido; usando SONARCLOUD_TOKEN como respaldo"
+                $env:SONAR_TOKEN = $env:SONARCLOUD_TOKEN
+              }
+              if (-not $env:SONAR_TOKEN) { Write-Error "Falta SONAR_TOKEN (ni SONARCLOUD_TOKEN)"; exit 1 }
               $jacocoItem = Get-ChildItem "$(System.DefaultWorkingDirectory)/.artifacts/backend-coverage" -Recurse -Filter jacoco.xml | Select-Object -First 1
               $lcovItem = Get-ChildItem "$(System.DefaultWorkingDirectory)/.artifacts/frontend-coverage" -Recurse -Filter lcov.info | Select-Object -First 1
               if (-not $jacocoItem) { Write-Warning "No se encontró jacoco.xml" }
