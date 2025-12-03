@@ -1,5 +1,43 @@
 package com.Color_craze.auth.services;
 
+import static org.junit.jupiter.api.Assertions.*;
+
+import com.Color_craze.configs.CustomUserDetails;
+import com.Color_craze.auth.models.AuthUser;
+import org.junit.jupiter.api.Test;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+
+import java.util.List;
+
+public class JwtServiceTest {
+
+    @Test
+    void generateAndValidateToken(){
+        JwtService jwt = new JwtService();
+        AuthUser user = AuthUser.builder().id("id1").email("u@example.com").nickname("n").password("p").build();
+        CustomUserDetails details = new CustomUserDetails(user);
+
+        String token = jwt.generateToken(details);
+        assertNotNull(token);
+        assertEquals("u@example.com", jwt.extractUsername(token));
+        assertTrue(jwt.isTokenValid(token, details));
+    }
+
+    @Test
+    void refreshTokenContainsRole(){
+        JwtService jwt = new JwtService();
+        AuthUser user = AuthUser.builder().id("id1").email("u@example.com").nickname("n").password("p").build();
+        CustomUserDetails details = new CustomUserDetails(user);
+
+        String refresh = jwt.generateRefreshToken(details);
+        assertNotNull(refresh);
+        // Validate token and ensure subject is correct
+        assertTrue(jwt.isTokenValid(refresh, details));
+        assertEquals("u@example.com", jwt.extractUsername(refresh));
+    }
+}
+package com.Color_craze.auth.services;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
