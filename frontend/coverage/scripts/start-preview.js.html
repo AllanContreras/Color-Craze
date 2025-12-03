@@ -3,7 +3,7 @@
 <html lang="en">
 
 <head>
-    <title>Code coverage report for src/api.js</title>
+    <title>Code coverage report for scripts/start-preview.js</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="../prettify.css" />
     <link rel="stylesheet" href="../base.css" />
@@ -19,13 +19,13 @@
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="../index.html">All files</a> / <a href="index.html">src</a> api.js</h1>
+        <h1><a href="../index.html">All files</a> / <a href="index.html">scripts</a> start-preview.js</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/17</span>
+                <span class='fraction'>0/27</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/17</span>
+                <span class='fraction'>0/27</span>
             </div>
         
             
@@ -80,7 +80,17 @@
 <a name='L15'></a><a href='#L15'>15</a>
 <a name='L16'></a><a href='#L16'>16</a>
 <a name='L17'></a><a href='#L17'>17</a>
-<a name='L18'></a><a href='#L18'>18</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L18'></a><a href='#L18'>18</a>
+<a name='L19'></a><a href='#L19'>19</a>
+<a name='L20'></a><a href='#L20'>20</a>
+<a name='L21'></a><a href='#L21'>21</a>
+<a name='L22'></a><a href='#L22'>22</a>
+<a name='L23'></a><a href='#L23'>23</a>
+<a name='L24'></a><a href='#L24'>24</a>
+<a name='L25'></a><a href='#L25'>25</a>
+<a name='L26'></a><a href='#L26'>26</a>
+<a name='L27'></a><a href='#L27'>27</a>
+<a name='L28'></a><a href='#L28'>28</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -97,23 +107,43 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" ><span class="branch-0 cbranch-no" title="branch not covered" >import axios from 'axios'</span></span></span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" >#!/usr/bin/env node<span class="fstat-no" title="function not covered" ><span class="branch-0 cbranch-no" title="branch not covered" ></span></span></span>
+<span class="cstat-no" title="statement not covered" >// Script de inicio que construye y lanza vite preview escuchando el PORT asignado</span>
+<span class="cstat-no" title="statement not covered" >// Compatible con Railway y desarrollo local.</span>
 <span class="cstat-no" title="statement not covered" ></span>
-<span class="cstat-no" title="statement not covered" >// En producción (Railway) usa directamente el backend público;</span>
-<span class="cstat-no" title="statement not covered" >// en desarrollo sigue usando VITE_API_URL o localhost.</span>
-<span class="cstat-no" title="statement not covered" >const API_URL = import.meta.env.PROD</span>
-<span class="cstat-no" title="statement not covered" >  ? 'https://color-craze-production.up.railway.app'</span>
-<span class="cstat-no" title="statement not covered" >  : (import.meta.env.VITE_API_URL || 'http://localhost:8080')</span>
+<span class="cstat-no" title="statement not covered" >const { execSync, spawn } = require('child_process');</span>
 <span class="cstat-no" title="statement not covered" ></span>
-<span class="cstat-no" title="statement not covered" >const api = axios.create({ baseURL: API_URL })</span>
+<span class="cstat-no" title="statement not covered" >const port = process.env.PORT || '4173';</span>
 <span class="cstat-no" title="statement not covered" ></span>
-<span class="cstat-no" title="statement not covered" >api.interceptors.request.use(cfg =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >  const token = localStorage.getItem('cc_token')</span>
-<span class="cstat-no" title="statement not covered" >  if (token) cfg.headers = { ...cfg.headers, Authorization: `Bearer ${token}` }</span>
-<span class="cstat-no" title="statement not covered" >  return cfg</span>
-<span class="cstat-no" title="statement not covered" >})</span>
+<span class="cstat-no" title="statement not covered" >function run(cmd) {</span>
+<span class="cstat-no" title="statement not covered" >  execSync(cmd, { stdio: 'inherit' });</span>
+<span class="cstat-no" title="statement not covered" >}</span>
 <span class="cstat-no" title="statement not covered" ></span>
-<span class="cstat-no" title="statement not covered" >export default api</span>
+<span class="cstat-no" title="statement not covered" >try {</span>
+<span class="cstat-no" title="statement not covered" >  console.log(`[start-preview] Construyendo frontend (vite build)...`);</span>
+<span class="cstat-no" title="statement not covered" >  run('npm run build');</span>
+<span class="cstat-no" title="statement not covered" >  console.log(`[start-preview] Lanzando vista previa en puerto ${port} ...`);</span>
+<span class="cstat-no" title="statement not covered" >  const preview = spawn('node', ['node_modules/vite/bin/vite.js', 'preview', '--port', port, '--host', '0.0.0.0'], {</span>
+<span class="cstat-no" title="statement not covered" >    stdio: 'inherit'</span>
+<span class="cstat-no" title="statement not covered" >  });</span>
+<span class="cstat-no" title="statement not covered" >  preview.on('close', (code) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    console.log(`[start-preview] proceso finalizado con código ${code}`);</span>
+<span class="cstat-no" title="statement not covered" >    process.exit(code);</span>
+<span class="cstat-no" title="statement not covered" >  });</span>
+<span class="cstat-no" title="statement not covered" >} catch (err) {</span>
+<span class="cstat-no" title="statement not covered" >  console.error('[start-preview] Error durante build o preview:', err.message);</span>
+<span class="cstat-no" title="statement not covered" >  process.exit(1);</span>
+<span class="cstat-no" title="statement not covered" >}</span>
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
