@@ -99,6 +99,33 @@ export default function Game(){
           if (fr && fr.scores){
             setPlayers(prev => prev.map(p => ({...p, score: (fr.scores[p.playerId] ?? p.score ?? 0)})))
           }
+          // Ensure avatar/color maps are available even if STATE hasn't arrived yet
+          // This allows drawing player sprites immediately using arena frames.
+          if (Array.isArray(fr.players) && fr.players.length > 0){
+            if (!playerAvatarMapRef.current || playerAvatarMapRef.current.size === 0){
+              const am = new Map()
+              // Prefer avatars from `players` state when available; fallback to ROBOT
+              const currentPlayers = (typeof players !== 'undefined' && Array.isArray(players)) ? players : []
+              const byId = new Map(currentPlayers.map(p => [p.playerId, p]))
+              for (const ap of fr.players){
+                const pl = byId.get(ap.playerId)
+                const av = pl && pl.avatar ? sanitizeAvatar(pl.avatar) : 'ROBOT'
+                am.set(ap.playerId, av)
+              }
+              playerAvatarMapRef.current = am
+            }
+            if (!playerColorMapRef.current || playerColorMapRef.current.size === 0){
+              const cm = new Map()
+              const currentPlayers = (typeof players !== 'undefined' && Array.isArray(players)) ? players : []
+              const byId = new Map(currentPlayers.map(p => [p.playerId, p]))
+              for (const ap of fr.players){
+                const pl = byId.get(ap.playerId)
+                const col = pl && pl.color ? pl.color : 'YELLOW'
+                cm.set(ap.playerId, col)
+              }
+              playerColorMapRef.current = cm
+            }
+          }
         } catch {}
       })
       // Just after CONNECT + subscriptions, fetch positions once to avoid any delay before first state arrives
