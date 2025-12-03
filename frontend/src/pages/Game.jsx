@@ -230,6 +230,22 @@ export default function Game(){
         cells[key] = { playerId: pos.playerId, color: colorToHex(pos.color) }
       }
       setPlayerCells(cells)
+    } else if (body.status === 'PLAYING') {
+      // Si estamos en PLAYING pero aún no tenemos posiciones en el estado STOMP,
+      // hacer un GET rápido para sincronizar posiciones iniciales y evitar que
+      // los personajes tarden en aparecer tras entrar a la partida.
+      if (!playerCells || Object.keys(playerCells).length === 0){
+        api.get(`/api/games/${code}`).then(res => {
+          if (Array.isArray(res.data?.playerPositions)){
+            const cells = {}
+            for (const pos of res.data.playerPositions){
+              const key = `${pos.row},${pos.col}`
+              cells[key] = { playerId: pos.playerId, color: colorToHex(pos.color) }
+            }
+            setPlayerCells(cells)
+          }
+        }).catch(() => {})
+      }
     }
     if (body.status === 'PLAYING'){
       // activar modo grande en la misma ventana (no abrir nueva ventana)
