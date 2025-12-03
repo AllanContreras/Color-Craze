@@ -198,3 +198,9 @@ stages:
               Write-Host "Ejecutando: mvnw $($args -join ' ')"
               & .\mvnw.cmd $args
             displayName: 'SonarCloud (mvn sonar:sonar fallback)'
+            env:
+              SONAR_TOKEN: $(SONAR_TOKEN)
+              SONARCLOUD_TOKEN: $(SONARCLOUD_TOKEN)
+              SONAR_ORG: $(SONAR_ORG)
+              SONAR_PROJECT_KEY: $(SONAR_PROJECT_KEY)
+              SONAR_PROJECT_NAME: $(SONAR_PROJECT_NAME)
