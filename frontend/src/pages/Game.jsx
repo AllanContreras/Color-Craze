@@ -295,6 +295,31 @@ export default function Game(){
           themeAssignedKeyRef.current = key
         }
       }
+      // If after switching to PLAYING we still have no positions, start a short polling loop
+      // to fetch positions from GET until they appear (max ~5s) to avoid manual refresh.
+      if (!playerCells || Object.keys(playerCells).length === 0){
+        const startedAt = Date.now()
+        const poll = () => {
+          if (Object.keys(playerCells || {}).length > 0) return
+          const elapsed = Date.now() - startedAt
+          if (elapsed > 5000) return // stop after ~5s
+          api.get(`/api/games/${code}`).then(r => {
+            if (Array.isArray(r.data?.playerPositions)){
+              const cells = {}
+              for (const pos of r.data.playerPositions){
+                const key = `${pos.row},${pos.col}`
+                cells[key] = { playerId: pos.playerId, color: colorToHex(pos.color) }
+              }
+              if (Object.keys(cells).length > 0){
+                setPlayerCells(cells)
+                return
+              }
+            }
+          }).catch(() => {})
+          setTimeout(poll, 500)
+        }
+        setTimeout(poll, 300)
+      }
     } else if (body.status === 'WAITING') {
       setCanMove(false)
       try { localStorage.removeItem('cc_isPlaying') } catch {}
