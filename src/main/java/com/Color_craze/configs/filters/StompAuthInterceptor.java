@@ -56,23 +56,20 @@ public class StompAuthInterceptor implements ChannelInterceptor {
             // Enforce JWT on CONNECT when JwtService is available
             String auth = sha.getFirstNativeHeader("Authorization");
             if (jwtService != null) {
-                if (auth == null || !auth.startsWith("Bearer ")) {
-                    // Allow temporarily if header missing (SockJS clients may differ); log for traceability
-                    log.warn("ws_event=CONNECT_NO_AUTH_HEADER session={} note=allowing-temporarily", sessionId);
-                } else {
-                    boolean valid = false;
+                boolean valid = false;
+                if (auth != null && auth.startsWith("Bearer ")) {
                     String token = auth.substring(7);
                     try {
-                        // Check token parses and is not expired
+                        // We only check that token parses and is not expired
                         String username = jwtService.extractUsername(token);
                         valid = (username != null && !username.isBlank());
                     } catch (Exception ex) {
                         valid = false;
                     }
-                    if (!valid) {
-                        log.warn("ws_event=REJECT_CONNECT reason=invalid_token session={}", sessionId);
-                        return null; // Reject CONNECT
-                    }
+                }
+                if (!valid) {
+                    log.warn("ws_event=REJECT_CONNECT reason=invalid_or_missing_token session={}", sessionId);
+                    return null; // Reject CONNECT
                 }
             }
         }
