@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.Color_craze.configs.CustomUserDetails;
 import com.Color_craze.auth.models.AuthUser;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.util.List;
@@ -12,7 +14,7 @@ import java.util.List;
 public class JwtServiceTest {
 
     @Test
-    void generateAndValidateToken(){
+    void generateAndValidateTokenWithCustomDetails(){
         JwtService jwt = new JwtService();
         AuthUser user = AuthUser.builder().id("id1").email("u@example.com").nickname("n").password("p").build();
         CustomUserDetails details = new CustomUserDetails(user);
@@ -35,22 +37,9 @@ public class JwtServiceTest {
         assertTrue(jwt.isTokenValid(refresh, details));
         assertEquals("u@example.com", jwt.extractUsername(refresh));
     }
-}
-package com.Color_craze.auth.services;
-
-import org.junit.jupiter.api.Test;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
-
-class JwtServiceTest {
 
     @Test
-    void generateAndValidateToken() {
+    void generateAndValidateTokenWithSpringUser() {
         JwtService jwtService = new JwtService();
         UserDetails user = new User("test@example.com", "noop", List.of(new SimpleGrantedAuthority("USER")));
 
