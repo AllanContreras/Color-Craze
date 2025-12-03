@@ -13,7 +13,10 @@ export function createStompClient(onConnect){
     webSocketFactory: socketFactory,
     debug: (m) => console.log('[STOMP]', m),
     // Reconnect after delay when connection drops
-    reconnectDelay: 5000,
+    reconnectDelay: 2000,
+    // Heartbeats: detect broken connections faster
+    heartbeatIncoming: 5000,
+    heartbeatOutgoing: 5000,
     connectHeaders: token ? { Authorization: `Bearer ${token}` } : {},
   })
 
@@ -34,7 +37,9 @@ export function createManagedStompClient(){
   const client = new Client({
     webSocketFactory: socketFactory,
     debug: (m) => console.log('[STOMP]', m),
-    reconnectDelay: 3000,
+    reconnectDelay: 2000,
+    heartbeatIncoming: 5000,
+    heartbeatOutgoing: 5000,
     connectHeaders: baseHeaders,
   })
 
