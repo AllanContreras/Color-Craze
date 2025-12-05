@@ -1,3 +1,4 @@
+// ...existing code...
 
 package com.Color_craze.board.services;
 import org.springframework.cache.annotation.Cacheable;
@@ -50,6 +51,15 @@ public class GameService {
     private org.springframework.data.redis.core.StringRedisTemplate redis;
     @org.springframework.beans.factory.annotation.Value("${app.redis.enabled:false}")
     private boolean redisEnabled;
+
+    // Versión ligera para optimización de latencia
+    public Optional<GameInfoLiteResponse> getGameLite(String code) {
+        return gameRepository.findByCode(code).map(gs -> {
+            int playerCount = gs.getPlayers() != null ? gs.getPlayers().size() : 0;
+            Long joinDeadlineMs = gs.getJoinDeadline() != null ? gs.getJoinDeadline().toEpochMilli() : null;
+            return new GameInfoLiteResponse(gs.getCode(), gs.getStatus(), joinDeadlineMs, playerCount, gs.getTheme());
+        });
+    }
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private GameStateSnapshotService snapshotService;
 
