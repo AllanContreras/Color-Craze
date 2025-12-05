@@ -31,9 +31,9 @@ public class GameSocketController {
         String playerId = moveMessage.getPlayerId();
         boolean allowed = rateLimiter.allow(code, playerId);
         if (!allowed) {
-            log.warn("[AUDIT] Rate limit BLOCKED: game={}, playerId={}, timestamp={}", code, playerId, System.currentTimeMillis());
+            log.warn("[ALERTA] Rate limit EXCEDIDO: game={}, playerId={}, timestamp={}. Mensaje DESCARTADO.", code, playerId, System.currentTimeMillis());
             try { meterRegistry.counter("ws.move.rate_limited").increment(); } catch (Exception ignored) {}
-            return;
+            return; // Mensaje descartado
         }
         Object payload = gameService.handlePlayerMove(code, playerId, moveMessage.getDirection());
         if (payload instanceof java.util.Map) {
