@@ -15,6 +15,7 @@ import com.Color_craze.board.dtos.JoinGameRequest;
 import com.Color_craze.board.dtos.UpdatePlayerRequest;
 import com.Color_craze.board.dtos.UpdateThemeRequest;
 import com.Color_craze.board.services.GameService;
+import com.Color_craze.board.dtos.GameInfoLiteResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -60,5 +61,13 @@ public class GameController {
     public ResponseEntity<Void> updateTheme(@PathVariable String code, @RequestBody UpdateThemeRequest req) {
         gameService.updateTheme(code, req);
         return ResponseEntity.ok().build();
+    }
+    
+    // Endpoint para versión ligera
+    @GetMapping("/{code}/lite")
+    public ResponseEntity<GameInfoLiteResponse> getGameLite(@PathVariable String code) {
+        return gameService.getGameLite(code)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.notFound().build());
     }
 }

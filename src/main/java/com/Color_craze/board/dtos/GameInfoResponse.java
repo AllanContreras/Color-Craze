@@ -19,11 +19,3 @@ public record GameInfoResponse(
     public static record ArenaPlatform(double x, double y, double width, double height, int cells) {}
 }
 
-// DTO ligero para optimización de latencia
-public record GameInfoLiteResponse(
-    String code,
-    String status,
-    Long joinDeadlineMs,
-    int playerCount,
-    String theme
-) {}
