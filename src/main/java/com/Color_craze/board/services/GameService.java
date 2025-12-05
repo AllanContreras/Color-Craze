@@ -18,6 +18,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.Color_craze.board.models.GameSession;
 import com.Color_craze.board.dtos.Responses.MoveResult;
+import com.Color_craze.board.dtos.GameInfoLiteResponse;
 import com.Color_craze.utils.enums.PlayerMove;
 import com.Color_craze.board.models.GameSession.PlayerEntry;
 import com.Color_craze.board.repositories.GameRepository;
