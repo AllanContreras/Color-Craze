@@ -33,7 +33,7 @@ export default function () {
   // If you have a specific game code, set __ENV.GAME_CODE
   const code = __ENV.GAME_CODE;
   if (code) {
-    const s = http.get(`${BASE}/api/games/${code}`, params);
+    const s = http.get(`${BASE}/api/games/${code}/lite`, params);
     check(s, {
       'state 200': (r) => r.status === 200,
     });
