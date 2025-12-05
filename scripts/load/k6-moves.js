@@ -27,7 +27,7 @@ export default function () {
   ws.connect(url, params, socket => {
     socket.on('open', () => {
       // Fire a burst of simulated moves
-      for (let i = 0; i < 40; i++) {
+      for (let i = 0; i < 100; i++) {
         // Simulate alternating moves
         const dir = i % 2 === 0 ? 'RIGHT' : 'DOWN';
         const start = Date.now();
@@ -35,7 +35,7 @@ export default function () {
           socket.send(JSON.stringify({ type: 'MOVE', game: GAME, direction: dir }));
           movesSent.add(1);
         } catch (e) {}
-        sleep(0.05); // 50ms between moves
+        sleep(0.01); // 10ms between moves (más rápido)
         moveLatency.add(Date.now() - start, { type: 'move' });
       }
     });
