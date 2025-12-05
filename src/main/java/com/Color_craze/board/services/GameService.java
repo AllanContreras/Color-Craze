@@ -54,6 +54,7 @@ public class GameService {
     private boolean redisEnabled;
 
     // Versión ligera para optimización de latencia
+    @Cacheable(value = "gamesLite", key = "#code")
     public Optional<GameInfoLiteResponse> getGameLite(String code) {
         return gameRepository.findByCode(code).map(gs -> {
             int playerCount = gs.getPlayers() != null ? gs.getPlayers().size() : 0;
