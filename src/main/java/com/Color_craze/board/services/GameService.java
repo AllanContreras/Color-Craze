@@ -284,7 +284,10 @@ public class GameService {
     }
 
     public void joinGame(String code, JoinGameRequest req) {
-        GameSession gs = gameRepository.findByCode(code).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found"));
+        GameSession gs = gameRepository.findByCode(code).orElseThrow(() -> {
+            System.err.println("[ERROR] joinGame failed: gameCode=" + code + ", playerId=" + req.playerId() + ", reason=Sala no encontrada");
+            return new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found");
+        });
         if (gs.getPlayers().size() >= 4) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Room full");
 
         // Color is always auto-assigned randomly from available player colors

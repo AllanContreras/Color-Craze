@@ -29,9 +29,9 @@ public class GameSocketController {
     public void handlePlayerMove(@Payload PlayerMoveRoomMessage moveMessage) {
         String code = moveMessage.getCode();
         String playerId = moveMessage.getPlayerId();
-        if (!rateLimiter.allow(code, playerId)) {
-            // Drop excessive messages to protect game loop; log WARN for audit/monitoring
-            try { log.warn("Rate limit exceeded: game={}, playerId={}", code, playerId); } catch (Exception ignored) {}
+        boolean allowed = rateLimiter.allow(code, playerId);
+        if (!allowed) {
+            log.warn("[AUDIT] Rate limit BLOCKED: game={}, playerId={}, timestamp={}", code, playerId, System.currentTimeMillis());
             try { meterRegistry.counter("ws.move.rate_limited").increment(); } catch (Exception ignored) {}
             return;
         }

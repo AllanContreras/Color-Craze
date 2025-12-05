@@ -26,7 +26,10 @@ public class MoveRateLimiter {
             c.windowStartMs = now;
             c.used = 0;
         }
-        if (c.used >= LIMIT) return false;
+        if (c.used >= LIMIT) {
+            System.out.println("[AUDIT] MoveRateLimiter BLOCKED: game=" + gameCode + ", playerId=" + playerId + ", timestamp=" + now);
+            return false;
+        }
         c.used++;
         return true;
     }
