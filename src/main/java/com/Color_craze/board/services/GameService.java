@@ -1,3 +1,4 @@
+import org.springframework.cache.annotation.Cacheable;
 package com.Color_craze.board.services;
 
 import java.security.SecureRandom;
@@ -96,6 +97,7 @@ public class GameService {
         return new CreateGameResponse(code);
     }
 
+    @Cacheable(value = "games", key = "#code")
     public Optional<GameInfoResponse> getGame(String code) {
         return gameRepository.findByCode(code).map(gs -> {
             // Fallback: si la ventana de unión ya expiró y aún está en WAITING, iniciar la partida
